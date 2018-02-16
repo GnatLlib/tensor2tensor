@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2017 The Tensor2Tensor Authors.
+# Copyright 2018 The Tensor2Tensor Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -277,7 +277,7 @@ def final_block(x1, x2, dim='2d', training=True, scope='final_block'):
 
     # Global average pooling
     net = tf.reduce_mean(y, CONFIG[dim]['reduction_dimensions'],
-                         name='final_pool', keepdims=True)
+                         name='final_pool', keep_dims=True)
 
     return net
 
