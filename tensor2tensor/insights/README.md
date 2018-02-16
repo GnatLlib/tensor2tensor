@@ -31,26 +31,26 @@ Start guide, a sample configuration would be:
 
 ```
   {
-    "configuration": [{
-      "source_language": "en",
-      "target_language": "de",
-      "label": "transformers_wmt32k",
-      "transformer": {
-        "model": "transformer",
-        "model_dir": "/tmp/t2t/train",
-        "data_dir": "/tmp/t2t/data",
-        "hparams": "",
-        "hparams_set": "transformer_base_single_gpu",
-        "problems": "translate_ende_wmt32k"
-      },
-    }]
-    "language": [{
-      "code": "en",
-      "name": "English",
-    },{
-      "code": "de",
-      "name": "German",
-    }]
+  	"configuration": [{
+  		"source_language": "en",
+  		"target_language": "de",
+  		"label": "transformers_wmt32k",
+  		"transformer": {
+  			"model": "transformer",
+  			"model_dir": "/Users/<username>/t2t_train/base",
+  			"data_dir": "/Users/<username>/t2t_data",
+  			"hparams": "",
+  			"hparams_set": "transformer_base_single_gpu",
+  			"problems": "translate_ende_wmt32k"
+  		}
+  	}],
+  	"language": [{
+  		"code": "en",
+  		"name": "English"
+  	}, {
+  		"code": "de",
+  		"name": "German"
+  	}]
   }
 ```
 
