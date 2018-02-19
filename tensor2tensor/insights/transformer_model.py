@@ -27,6 +27,7 @@ import numpy as np
 from tensor2tensor.bin import t2t_trainer
 from tensor2tensor.data_generators import text_encoder
 from tensor2tensor.insights import graph
+from tensor2tensor.insights import nbest
 from tensor2tensor.insights import query_processor
 from tensor2tensor.utils import decoding
 from tensor2tensor.utils import trainer_lib
@@ -251,6 +252,33 @@ class TransformerModel(query_processor.QueryProcessor):
           edge.data["log_probability"] = score
           edge.data["total_log_probability"] = score
 
+    # Extract the NBest search information by reading the dumped TFDBG event
+    # tensors.
+    decoding_nbest = nbest.NBest()
+    run_dirs = sorted(glob.glob(os.path.join(hook_dir, "run_*")))
+    for run_dir in run_dirs:
+      
+      dump_dir = tfdbg.DebugDumpDir(run_dir, validate=False)
+      seq_datums = dump_dir.find(predicate=seq_filter)
+      score_datums = dump_dir.find(predicate=scores_filter)
+
+      for seq_datum, score_datum in zip(seq_datums, score_datums):
+        sequences = np.array(seq_datum.get_tensor()).astype(int)[0]
+        if "alive" in seq_datum.node_name:
+          """alive_sequences.append(sequences)"""
+          continue
+        if "finished" in seq_datum.node_name:
+          finished_sequences.append(sequences)
+
+        # scores = np.array(score_datum.get_tensor()).astype(float)[0]
+        # print(sequences)
+        # print(scores)
+
+        for sequence in sequences:
+          trimmed_sequence = np.trim_zeros(sequence)
+          pieces = self.targets_vocab.decode_list(sequence)
+          t = decoding_nbest.get_sentence(sequence_key(trimmed_sequence), pieces)
+
     # Delete the hook dir to save disk space
     shutil.rmtree(hook_dir)
 
@@ -297,6 +325,13 @@ class TransformerModel(query_processor.QueryProcessor):
         },
     }
 
+    nbest_vis = {
+      "visualization_name": "nbest",
+      "title": "NBest",
+      "name": "nbest",
+      "nbest_data": decoding_nbest.to_dict(),
+    }
+
     return {
-        "result": [processing_vis, graph_vis],
+        "result": [processing_vis, graph_vis, nbest_vis],
     }
