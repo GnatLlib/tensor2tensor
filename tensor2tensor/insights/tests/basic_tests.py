@@ -11,6 +11,17 @@ class TestInsightLoad(unittest.TestCase):
         SeleniumHelperInstance.waitForPageTitle("NMT Research Frontend")
         SeleniumHelperInstance.closeBrowser()
 
+    def test_translation(self):
+        SeleniumHelperInstance.initializeWebdriver("Chrome")
+        SeleniumHelperInstance.navigateToHome()
+        SeleniumHelperInstance.translate("The cat is fat")
+
+        SeleniumHelperInstance.waitForTranslation()
+        SeleniumHelperInstance.closeBrowser()
+
+
+
+
 
 if __name__ == '__main__':
     SeleniumHelperInstance = SeleniumHelper()
