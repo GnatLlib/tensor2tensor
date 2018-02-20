@@ -297,6 +297,13 @@ class TransformerModel(query_processor.QueryProcessor):
         },
     }
 
+    attention_vis = {
+        "visualization_name": "attention",
+        "title": "Processing",
+        "name": "processing",
+        "word_heat_map":
+    }
+
     return {
-        "result": [processing_vis, graph_vis],
+        "result": [processing_vis, graph_vis, attention_vis],
     }
