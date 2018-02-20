@@ -41,6 +41,7 @@ setup(
         'numpy',
         'requests',
         'scipy',
+        'selenium',
         'sympy',
         'six',
     ],
