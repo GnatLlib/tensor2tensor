@@ -18,8 +18,42 @@ limitations under the License.
 
 <dom-module id="nbest-visualization">
   <template>
-    <custom-style>
-    </custom-style>
+      <custom-style>
+        <style is="custom-style">
+          .results-table {
+            width: 100%;
+            counter-reset: rank-number;
+          }
+
+          .results-table td:first-child:before {
+            counter-increment: rank-number;
+            content: counter(rank-number);
+          }
+
+          .results-table th, td {
+            padding: 6px;
+            font-size: 14px;
+          }
+
+          .rank-header {
+            width: 90px;
+          }
+
+          .score-header {
+            width: 180px;
+          }
+
+          .result-header {
+            width: auto;
+          }
+
+          table, tr {
+            border: 1px solid #cccccc;
+            border-collapse: collapse;
+          }
+
+        </style>
+      </custom-style>
     <h3>NBest Visualization</h3>
     <!--
       TODO: Display the nbest chart for the selected sentence.
@@ -28,13 +62,24 @@ limitations under the License.
     <!--
       TODO: Display the data as a selectable sentence results table.
     -->
+    <table class="results-table">
+      <tr>
+        <th class="rank-header" align="left">Rank</th>
+        <th class="score-header" align="left">Total Score</th>
+        <th class="result-header" align="left" colspan="2">Result</th>
+      </tr>
       <template is="dom-repeat" items="[[data.sentence]]" as="sentence">
-        <div> Score: [[sentence.score]] Sentence: 
-          <template is="dom-repeat" items="[[sentence.tokens]]" as="token">
-            <span>[[token.text]] </span>
-          </template>
-        </div>
+        <tr>
+          <td> </td>
+          <td>[[sentence.score]]</td>
+          <td>
+            <template is="dom-repeat" items="[[sentence.tokens]]" as="token">
+              <span>[[token.text]] </span>
+            </template>
+          </td>
+        </tr>
       </template>
+    </table>
   </template>
   <script src="nbest-visualization.js"></script>
 </dom-module>

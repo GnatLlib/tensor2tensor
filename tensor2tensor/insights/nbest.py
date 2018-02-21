@@ -151,10 +151,12 @@ class NBest(object):
 
   def to_dict(self):
     """Returns a simplified dictionary representing the NBest data structure.
+    Sentences as sorted by score for ranking.
 
     Returns:
       A dictionary that can easily be serialized to JSON.
     """
+    sentencesorted = sorted(self.sentences, key=lambda x: x.score, reverse=True)
     return {
-        "sentence": [s.to_dict() for s in self.sentences]
+        "sentence": [s.to_dict() for s in sentencesorted]
     }
