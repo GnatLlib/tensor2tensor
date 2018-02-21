@@ -57,6 +57,7 @@ class Sentence(object):
     """
     return {
         "tokens": [t.to_dict() for t in self.tokens],
+        "rank": self.rank,
     }
 
 
