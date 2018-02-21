@@ -29,7 +29,7 @@ limitations under the License.
       TODO: Display the data as a selectable sentence results table.
     -->
       <template is="dom-repeat" items="[[data.sentence]]" as="sentence">
-        <div>
+        <div> Score: [[sentence.score]] Sentence: 
           <template is="dom-repeat" items="[[sentence.tokens]]" as="token">
             <span>[[token.text]] </span>
           </template>

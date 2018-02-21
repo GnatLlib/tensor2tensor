@@ -263,21 +263,13 @@ class TransformerModel(query_processor.QueryProcessor):
       score_datums = dump_dir.find(predicate=scores_filter)
 
       for seq_datum, score_datum in zip(seq_datums, score_datums):
-        sequences = np.array(seq_datum.get_tensor()).astype(int)[0]
-        if "alive" in seq_datum.node_name:
-          """alive_sequences.append(sequences)"""
-          continue
-        if "finished" in seq_datum.node_name:
-          finished_sequences.append(sequences)
-
-        # scores = np.array(score_datum.get_tensor()).astype(float)[0]
-        # print(sequences)
-        # print(scores)
-
-        for sequence in sequences:
-          trimmed_sequence = np.trim_zeros(sequence)
-          pieces = self.targets_vocab.decode_list(sequence)
-          t = decoding_nbest.get_sentence(sequence_key(trimmed_sequence), pieces)
+        if "finished" in seq_datum.node_name and "finished" in score_datum.node_name:
+          sequences = np.array(seq_datum.get_tensor()).astype(int)[0]
+          scores = np.array(score_datum.get_tensor()).astype(float)[0]
+          for sequence, score in zip(sequences, scores):
+            trimmed_sequence = np.trim_zeros(sequence)
+            pieces = self.targets_vocab.decode_list(trimmed_sequence)
+            t = decoding_nbest.get_sentence(sequence_key(trimmed_sequence), pieces, score)
 
     # Delete the hook dir to save disk space
     shutil.rmtree(hook_dir)

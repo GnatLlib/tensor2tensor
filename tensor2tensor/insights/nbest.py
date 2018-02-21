@@ -33,7 +33,7 @@ class Sentence(object):
       idx: The index of the sentence.
     """
     self.idx = idx
-    self.rank = 0
+    self.score = 0
     self.tokens = []
 
   def add_tokens(self, token_list):
@@ -48,6 +48,13 @@ class Sentence(object):
         self.tokens.append(t)
         index+=1
 
+  def add_score(self, score):
+    """Add score to the (entire) Sentence.
+
+    Args:
+      score: score of the sentence (not individual tokens)
+    """
+    self.score = score
 
   def to_dict(self):
     """Returns a simplified dictionary representing the Sentence.
@@ -57,7 +64,7 @@ class Sentence(object):
     """
     return {
         "tokens": [t.to_dict() for t in self.tokens],
-        "rank": self.rank,
+        "score": self.score,
     }
 
 
@@ -109,29 +116,36 @@ class NBest(object):
     self.sentences = []
     self.sentence_map = {}
 
-  def new_sentence(self, tokens):
+  def new_sentence(self, tokens, score):
     """Creates and returns a new vertex.
+
+    Args:
+      tokens: Tokens in the sentence
+      score: Score of the sentence
 
     Returns:
       A new Sentence instance with a unique index.
     """
     sentence = Sentence(len(self.sentences))
     sentence.add_tokens(tokens)
+    sentence.add_score(score)
     self.sentences.append(sentence)
     return sentence
 
-  def get_sentence(self, idx, tokens):
+  def get_sentence(self, idx, tokens, score):
     """Returns or Creates a sentence mapped by idx.
 
     Args:
       idx: Index of the sentence
+      tokens: Tokens in the sentence
+      score: Score of the sentence
 
     Returns:
       A the Sentence mapped to by idx.
     """
     if idx in self.sentence_map:
       return self.sentence_map[idx]
-    sentence = self.new_sentence(tokens)
+    sentence = self.new_sentence(tokens, score)
     self.sentence_map[idx] = sentence
     return sentence
 
