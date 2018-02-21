@@ -161,3 +161,25 @@ let GenerateCandidateResponse;
  * }}
  */
 let StartTranslationResponse;
+
+/**
+ * @typedef {{
+ *   text: string,
+ * }}
+ */
+let Token;
+
+/**
+ * @typedef {{
+ *   tokens: !Array<!Token>,
+ *   rank: number,
+ * }}
+ */
+let Sentence;
+
+/**
+ * @typedef {{
+ *   sentence: !Array<!Sentence>,
+ * }}
+ */
+let QueryNBestVisualization;

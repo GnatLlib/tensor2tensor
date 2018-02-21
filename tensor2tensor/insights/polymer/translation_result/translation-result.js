@@ -49,6 +49,7 @@ class TranslationResult extends Polymer.Element {
        *     query_processing: ?Object,
        *     search_graph: ?Object,
        *     word_heat_map: ?Object,
+       *     nbest: ?Object,
        *   },
        *   model: !Model,
        *   query: string
@@ -101,6 +102,8 @@ class TranslationResult extends Polymer.Element {
         analysisEle.data = visualizationResult.word_heat_map;
       } else if (visualizationResult.visualization_name == 'graph') {
         analysisEle.data = visualizationResult.search_graph;
+      } else if (visualizationResult.visualization_name == 'nbest') {
+        analysisEle.data = visualizationResult.nbest_data;
       }
 
       Polymer.dom(this.$.view).appendChild(analysisEle);
