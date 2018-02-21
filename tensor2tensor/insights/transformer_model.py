@@ -28,6 +28,7 @@ from tensor2tensor.bin import t2t_trainer
 from tensor2tensor.data_generators import text_encoder
 from tensor2tensor.insights import graph
 from tensor2tensor.insights import query_processor
+from tensor2tensor.insights import attention
 from tensor2tensor.utils import decoding
 from tensor2tensor.utils import trainer_lib
 from tensor2tensor.utils import usr_dir
@@ -301,7 +302,11 @@ class TransformerModel(query_processor.QueryProcessor):
         "visualization_name": "attention",
         "title": "Attention",
         "name": "Attention",
-        "word_heat_map": { },
+        "word_heat_map": {
+            "source_tokens": [],
+            "target_tokens": [],
+            "weights": [],
+        },
     }
 
     return {
