@@ -62,14 +62,16 @@ limitations under the License.
     <!--
       TODO: Display the data as a selectable sentence results table.
     -->
-    <table class="results-table">
+    <div id="chart"></div>
+
+    <table class="results-table" id="nbest-table">
       <tr>
         <th class="rank-header" align="left">Rank</th>
         <th class="score-header" align="left">Total Score</th>
         <th class="result-header" align="left" colspan="2">Result</th>
       </tr>
       <template is="dom-repeat" items="[[data.sentence]]" as="sentence">
-        <tr>
+        <tr class="sentence-row">
           <td> </td>
           <td>[[sentence.score]]</td>
           <td>

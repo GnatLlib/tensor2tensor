@@ -87,7 +87,7 @@ class Token(object):
     """
     self.idx = idx
     self.text = text
-    self.score = -1
+    self.score = 0.5
 
   def to_dict(self):
     """Returns a simplified dictionary representing the Token.
