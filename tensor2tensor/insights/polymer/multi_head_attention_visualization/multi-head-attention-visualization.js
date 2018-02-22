@@ -1,4 +1,4 @@
-class GraphVisualization extends Polymer.Element {
+class MultiHeadAttention extends Polymer.Element {
   constructor() {
     super();
   }
@@ -7,4 +7,4 @@ class GraphVisualization extends Polymer.Element {
   }
 }
 
-customElements.define(AttentionVisualization.is, AttentionVisualization);
+customElements.define(MultiHeadAttention.is, MultiHeadAttention);

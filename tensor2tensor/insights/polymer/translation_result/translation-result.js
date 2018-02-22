@@ -87,7 +87,7 @@ class TranslationResult extends Polymer.Element {
       let analysisEle = document.createElement(
           visualizationResult.visualization_name + '-visualization');
 
-      console.log(visualizationResult.visualization_name);
+      // console.log(visualizationResult.visualization_name);
 
       // Set the generic attributes.
       analysisEle.name = visualizationResult.name;
