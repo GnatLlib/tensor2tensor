@@ -298,17 +298,13 @@ class TransformerModel(query_processor.QueryProcessor):
         },
     }
 
-    attention_vis = {
-        "visualization_name": "attention",
-        "title": "Attention",
-        "name": "Attention",
-        "word_heat_map": {
-            "source_tokens": [],
-            "target_tokens": [],
-            "weights": [],
-        },
+    multi_head_attention_vis = {
+        "visualization_name": "multi-head-attention",
+        "title": "Multi Head Attention",
+        "name": "multi_head_attention",
+        "word_heat_map": []
     }
 
     return {
-        "result": [processing_vis, graph_vis, attention_vis],
+        "result": [processing_vis, graph_vis, multi_head_attention_vis],
     }
