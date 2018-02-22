@@ -59,10 +59,27 @@ class NBestVisualization extends Polymer.Element {
     };
   }
 
+  makeSelectable() {
+    // Making rows selectable
+    // Using JQuery, there might be a better way to do this though
+    var table = Polymer.dom(this.root).querySelector('#nbest-table');
+    var self = this;
+    $(table).find(".sentence-row").click(function(){
+      $(this).addClass('selected').siblings().removeClass('selected');    
+      var value=$(this).index() - 1; // this index returns 1 higher than sequence index
+      self.updateSelected(value);
+    });
+  }
+
+  updateSelected(value) {
+    this.selected_ = value;
+    this.dataUpdated_();
+  }
+
   dataUpdated_() {
     // TODO: do stuff with the data
-    var data = this.data;
-    var sentence = data.sentence;
+    // var data = this.data;
+    // var sentence = data.sentence;
 
     this.createSVG_();
   }
@@ -80,9 +97,11 @@ class NBestVisualization extends Polymer.Element {
     var width = window.innerWidth - margins[1] - margins[2] - 256 - 100; // side bar is 256 px wide
     var height = window.innerHeight - margins[0] - margins[3];
 
+    // Remove Current graph if any
+    d3.select(this.$.chart).selectAll('.svg-container').remove();
+
     // set the dataset
-    // TODO: Change from hard coded based on currently selected sentence
-    var dataset = this.data.sentence[2].tokens;
+    var dataset = this.data.sentence[this.selected_].tokens;
 
     // Create the scales
     var xScale = d3.scaleLinear()
@@ -99,7 +118,10 @@ class NBestVisualization extends Polymer.Element {
       .y(function(d) { return yScale(d.score); }) // set the y values for the line generator 
 
     // Add the SVG to the page
-    var svg = d3.select(this.$.chart).append("svg")
+    var svg = d3.select(this.$.chart)
+      .append("div")
+      .classed("svg-container", true)
+      .append("svg")
       .attr("width", "100%")
       .attr("height", height + margins[0] + margins[3])
       .append("g")
