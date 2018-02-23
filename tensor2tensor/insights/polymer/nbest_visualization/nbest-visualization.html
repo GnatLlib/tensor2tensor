@@ -1,0 +1,95 @@
+<!--
+@license
+Copyright 2018 The Tensor2Tensor Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+   http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+<link rel="import" href="../polymer/polymer.html">
+<script src="https://code.jquery.com/jquery-2.1.4.js"></script>
+
+<dom-module id="nbest-visualization">
+  <template>
+    <custom-style>
+      <style is="custom-style">
+        .results-table {
+          width: 100%;
+          counter-reset: rank-number;
+        }
+
+        .results-table td:first-child:before {
+          counter-increment: rank-number;
+          content: counter(rank-number);
+        }
+
+        .results-table th, td {
+          padding: 6px;
+          font-size: 14px;
+        }
+
+        tr.sentence-row:hover td {
+          background-color: #f2f2f2;
+        }
+
+        .sentence-row {
+          cursor: pointer;
+        }
+
+        .sentence-row.selected {
+          background-color: #f6f6f6;
+        }
+
+        .rank-header {
+          width: 90px;
+        }
+
+        .score-header {
+          width: 180px;
+        }
+
+        .result-header {
+          width: auto;
+        }
+
+        table, tr {
+          border: 1px solid #cccccc;
+          border-collapse: collapse;
+        }
+
+      </style>
+    </custom-style>
+    
+    <!-- NBest Line Graph Visualization -->
+    <div id="chart"></div>
+
+    <!-- NBest Sentence Results Table -->
+    <table class="results-table" id="nbest-table">
+      <tr>
+        <th class="rank-header" align="left">Rank</th>
+        <th class="score-header" align="left">Total Score</th>
+        <th class="result-header" align="left">Result</th>
+      </tr>
+      <template is="dom-repeat" items="[[data.sentence]]" as="sentence" on-dom-change="makeSelectable">
+        <tr class="sentence-row">
+          <td> </td>
+          <td>[[sentence.score]]</td>
+          <td>
+            <template is="dom-repeat" items="[[sentence.tokens]]" as="token">
+              <span>[[token.text]] </span>
+            </template>
+          </td>
+        </tr>
+      </template>
+    </table>
+  </template>
+  <script src="nbest-visualization.js"></script>
+</dom-module>
