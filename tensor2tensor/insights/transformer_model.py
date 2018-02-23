@@ -21,6 +21,7 @@ import glob
 import os
 import shutil
 import time
+import json
 
 import numpy as np
 
@@ -28,10 +29,12 @@ from tensor2tensor.bin import t2t_trainer
 from tensor2tensor.data_generators import text_encoder
 from tensor2tensor.insights import graph
 from tensor2tensor.insights import query_processor
-from tensor2tensor.insights import attention
 from tensor2tensor.utils import decoding
 from tensor2tensor.utils import trainer_lib
 from tensor2tensor.utils import usr_dir
+
+from tensor2tensor.visualization import visualization
+from tensor2tensor.visualization import attention
 
 import tensorflow as tf
 from tensorflow.python import debug as tfdbg
@@ -110,6 +113,7 @@ class TransformerModel(query_processor.QueryProcessor):
     FLAGS.output_dir = transformer_config["model_dir"]
     usr_dir.import_usr_dir(FLAGS.t2t_usr_dir)
     data_dir = os.path.expanduser(transformer_config["data_dir"])
+    FLAGS.data_dir = data_dir
 
     # Create the basic hyper parameters.
     self.hparams = trainer_lib.create_hparams(
@@ -149,6 +153,39 @@ class TransformerModel(query_processor.QueryProcessor):
       A dictionary of results with processing and graph visualizations.
     """
     tf.logging.info("Processing new query [%s]" %query)
+
+    # Get attention visualization data TEMPORARY WORKAROUND USING A SEPERATE SESSION
+    CHECKPOINT = FLAGS.output_dir
+    checkpoint_file = os.path.join(CHECKPOINT, "checkpoint")
+    checkpoint_restore = os.path.join(CHECKPOINT, "checkpoint_restore")
+
+    problem_name = 'translate_ende_wmt32k'
+    model_name = "transformer"
+    hparams_set = "transformer_base_single_gpu"
+    data_dir = FLAGS.data_dir
+    visualizer = visualization.AttentionVisualizer(hparams_set, model_name, data_dir, problem_name, beam_size=1)
+
+    print("CHECKPOINT DIRECTORY" + CHECKPOINT + " " + data_dir)
+
+    shutil.copyfile(checkpoint_file, checkpoint_restore)
+
+    tf.Variable(0, dtype=tf.int64, trainable=False, name='global_step')
+
+    sess = tf.train.MonitoredTrainingSession(
+        checkpoint_dir=CHECKPOINT,
+        save_summaries_secs=0,
+    )
+
+    input_sentence = query
+    output_string, inp_text, out_text, att_mats = visualizer.get_vis_data_from_string(sess, input_sentence)
+    print(output_string)
+
+    att_json = json.dumps(attention._get_attention(inp_text, out_text, *att_mats))
+    sess.close()
+
+    # Restore the checkpoint from a copy that the session doesn't screw up
+
+    open(checkpoint_file, "w").writelines([l for l in open(checkpoint_restore).readlines()])
 
     # Create the new TFDBG hook directory.
     hook_dir = "/tmp/t2t_server_dump/request_%d" %int(time.time())
