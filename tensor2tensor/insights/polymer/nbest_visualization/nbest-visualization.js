@@ -1,4 +1,4 @@
-/**
+  /**
  * @license
  * Copyright 2018 The Tensor2Tensor Authors.
  *
@@ -124,11 +124,18 @@ class NBestVisualization extends Polymer.Element {
       .append("g")
       .attr("transform", "translate(" + margins[1] + "," + margins[0] + ")");
 
+    var textValues = dataset.map(function(d){ return d.text });
+    console.log(textValues);
+
     // Call the x axis in a group tag
     svg.append("g")
       .attr("class", "x axis")
       .attr("transform", "translate(0," + height + ")")
-      .call(d3.axisBottom(xScale)); // Create an axis component with d3.axisBottom
+      .call(d3.axisBottom(xScale) // Create an axis component with d3.axisBottom
+        .ticks(dataset.length)
+        .tickFormat(function(d, i) {
+          return textValues[i];
+        }));
 
     // Call the y axis in a group tag
     svg.append("g")
