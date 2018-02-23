@@ -134,12 +134,16 @@ class NBestVisualization extends Polymer.Element {
 
     var yScale = d3.scaleLinear()
       .domain([0, 1]) // input 
-      .range([height, 0]); // output 
+      .range([height, 0]); // output
 
     // Create line (not working)
     var line = d3.line()
       .x(function(d, i) { return xScale(i); }) // set the x values for the line generator
-      .y(function(d) { return yScale(d.score); }) // set the y values for the line generator 
+      .y(function(d) { return yScale(d.score); }) // set the y values for the line generator
+
+    var line2 = d3.line()
+      .x(function(d, i) { return xScale(i); }) // set the x values for the line generator
+      .y(function(d) { return yScale(d.totalscore); }) // set the y values for the line generator 
 
     // Add the SVG to the page
     var svg = d3.select(this.$.chart)
@@ -152,7 +156,9 @@ class NBestVisualization extends Polymer.Element {
       .attr("transform", "translate(" + margins[1] + "," + margins[0] + ")");
 
     var textValues = dataset.map(function(d){ return d.text });
-    console.log(textValues);
+
+    var totalValues = dataset.map(function(d){ return d.totalscore });
+    console.log(totalValues);
 
     // Call the x axis in a group tag
     svg.append("g")
@@ -172,9 +178,14 @@ class NBestVisualization extends Polymer.Element {
     // Append the path, bind the data, and call the line generated
     svg.append("path")
       .datum(dataset) // 10. Binds data to the line 
-      .attr("class", "line") // Assign a class for styling 
-      .attr("d", line); // 11. Calls the line generator 
+      .attr("class", "line2") // Assign a class for styling
+      .attr("d", line2); // 11. Calls the line generator 
 
+    svg.append("path")
+      .datum(dataset) // 10. Binds data to the line 
+      .attr("class", "line") // Assign a class for styling
+      .attr("d", line); // 11. Calls the line generator 
+    /*
     // Appends a circle for each datapoint 
     svg.selectAll(".dot")
       .data(dataset)
@@ -182,7 +193,25 @@ class NBestVisualization extends Polymer.Element {
       .attr("class", "dot") // Assign a class for styling
       .attr("cx", function(d, i) { return xScale(i) })
       .attr("cy", function(d) { return yScale(d.score) })
-      .attr("r", 5);
+      .attr("r", 5)
+
+    */
+    var nodeEnter = svg.selectAll("circle")
+      .data(dataset)
+      .enter()
+      .insert("g");
+
+    nodeEnter.insert("circle")
+      .attr("cx", function (d, i) { return xScale(i) })
+      .attr("cy", function (d) { return yScale(d.score) })
+      .attr("class", "dot")
+      .attr("r", 5)
+
+    nodeEnter.insert("circle")
+      .attr("cx", function (d, i) { return xScale(i) })
+      .attr("cy", function (d) { return yScale(d.totalscore) })
+      .attr("class", "dot2")
+      .attr("r", 5)
     }
   }
   
