@@ -58,27 +58,57 @@ class NBestVisualization extends Polymer.Element {
       },
     };
   }
-
+  
+  /**
+   * Helper function for making sentence rows selectable in the results table.
+   * Currently implemented using jQuery.
+   */
   makeSelectable() {
-    // Making rows selectable
     // Using JQuery, there might be a better way to do this though
     var table = Polymer.dom(this.root).querySelector('#nbest-table');
     var self = this;
     $(table).find(".sentence-row").click(function(){
       $(this).addClass('selected').siblings().removeClass('selected');    
       var value=$(this).index() - 1; // this index returns 1 higher than sequence index
-      self.updateSelected(value);
+      self.updateSelected_(value);
     });
   }
 
-  updateSelected(value) {
+  /**
+   * Helper function to update the selected row when a row in the results 
+   * table is clicked.
+   * @private
+   */
+  updateSelected_(value) {
     this.selected_ = value;
     this.dataUpdated_();
   }
 
+  /**
+   * Called whenever the data is updated.
+   * @private
+   */
   dataUpdated_() {
-    // TODO: compute total score based on token scores
-    this.createSVG_();
+    // Compute total score based on token scores
+    var computedData = this.prepareData_();
+
+    // Create and display the svg
+    this.createSVG_(computedData);
+  }
+
+  /**
+   * Prepares the data for the selected sentence to be displayed in the svg.
+   * Computes total score given the token scores.
+   * @private
+   */
+  prepareData_() {
+    var dataset = this.data.sentence[this.selected_].tokens;
+    var curr_score = 1;
+    dataset.forEach(function(token) {
+      curr_score *= token.score;
+      token.totalscore = curr_score;
+    });
+    return dataset;
   }
 
   /**
@@ -86,7 +116,7 @@ class NBestVisualization extends Polymer.Element {
    * all previous svg elements.
    * @private
    */
-  createSVG_() {
+  createSVG_(dataset) {
     // Dimension variables
     var maxWidth = 1600;
     var maxHeight = 160;
@@ -96,9 +126,6 @@ class NBestVisualization extends Polymer.Element {
 
     // Remove Current graph if any
     d3.select(this.$.chart).selectAll('.svg-container').remove();
-
-    // set the dataset
-    var dataset = this.data.sentence[this.selected_].tokens;
 
     // Create the scales
     var xScale = d3.scaleLinear()
@@ -151,7 +178,7 @@ class NBestVisualization extends Polymer.Element {
     // Appends a circle for each datapoint 
     svg.selectAll(".dot")
       .data(dataset)
-    .enter().append("circle") // Uses the enter().append() method
+      .enter().append("circle") // Uses the enter().append() method
       .attr("class", "dot") // Assign a class for styling
       .attr("cx", function(d, i) { return xScale(i) })
       .attr("cy", function(d) { return yScale(d.score) })
