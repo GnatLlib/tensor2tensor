@@ -77,10 +77,7 @@ class NBestVisualization extends Polymer.Element {
   }
 
   dataUpdated_() {
-    // TODO: do stuff with the data
-    // var data = this.data;
-    // var sentence = data.sentence;
-
+    // TODO: compute total score based on token scores
     this.createSVG_();
   }
 
@@ -95,7 +92,7 @@ class NBestVisualization extends Polymer.Element {
     var maxHeight = 160;
     var margins = [20, 50, 50, 50];
     var width = window.innerWidth - margins[1] - margins[2] - 256 - 100; // side bar is 256 px wide
-    var height = window.innerHeight - margins[0] - margins[3];
+    var height = window.innerHeight - margins[0] - margins[3] - 100;
 
     // Remove Current graph if any
     d3.select(this.$.chart).selectAll('.svg-container').remove();

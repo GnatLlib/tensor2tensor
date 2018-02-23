@@ -26,10 +26,6 @@ limitations under the License.
             counter-reset: rank-number;
           }
 
-          .sentence-row {
-            cursor: pointer;
-          }
-
           .results-table td:first-child:before {
             counter-increment: rank-number;
             content: counter(rank-number);
@@ -38,6 +34,18 @@ limitations under the License.
           .results-table th, td {
             padding: 6px;
             font-size: 14px;
+          }
+
+          tr.sentence-row:hover td {
+            background-color: #f2f2f2;
+          }
+
+          .sentence-row {
+            cursor: pointer;
+          }
+
+          .sentence-row.selected {
+            background-color: #f6f6f6;
           }
 
           .rank-header {
@@ -59,21 +67,16 @@ limitations under the License.
 
         </style>
       </custom-style>
-    <h3>NBest Visualization</h3>
-    <!--
-      TODO: Display the nbest chart for the selected sentence.
-    -->
-
-    <!--
-      TODO: Display the data as a selectable sentence results table.
-    -->
+    
+    <!-- NBest Line Graph Visualization -->
     <div id="chart"></div>
 
+    <!-- NBest Sentence Results Table -->
     <table class="results-table" id="nbest-table">
       <tr>
         <th class="rank-header" align="left">Rank</th>
         <th class="score-header" align="left">Total Score</th>
-        <th class="result-header" align="left" colspan="2">Result</th>
+        <th class="result-header" align="left">Result</th>
       </tr>
       <template is="dom-repeat" items="[[data.sentence]]" as="sentence" on-dom-change="makeSelectable">
         <tr class="sentence-row">
