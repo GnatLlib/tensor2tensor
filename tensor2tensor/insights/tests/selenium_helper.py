@@ -88,9 +88,8 @@ class SeleniumHelper():
 
             tabs = translation_result_root.find_elements_by_css_selector("paper-tab")
 
-            print("TABS")
+
             for tab in tabs:
-                print(tab.text)
                 if tab.text ==  (visualization):
                     tab.click()
 
