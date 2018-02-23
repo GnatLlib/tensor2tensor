@@ -21,6 +21,7 @@ import glob
 import os
 import shutil
 import time
+import json
 
 import numpy as np
 
@@ -28,6 +29,8 @@ from tensor2tensor.bin import t2t_trainer
 from tensor2tensor.data_generators import text_encoder
 from tensor2tensor.insights import graph
 from tensor2tensor.insights import query_processor
+from tensor2tensor.insights import attention
+from tensor2tensor.insights import hardcoded_attention_data
 from tensor2tensor.utils import decoding
 from tensor2tensor.utils import trainer_lib
 from tensor2tensor.utils import usr_dir
@@ -297,6 +300,25 @@ class TransformerModel(query_processor.QueryProcessor):
         },
     }
 
+    attentionData = hardcoded_attention_data.AttentionData()
+
+    inp_text = attentionData.get_in_text()
+    out_text = attentionData.get_out_text()
+    enc_atts, dec_atts, encdec_atts = attentionData.get_att_matrix()
+
+    attentionClass = attention.Attention()
+
+    attention_results = attentionClass.get_attentions_ds(inp_text, out_text, enc_atts, dec_atts, encdec_atts)
+
+    #print(attention_results)
+
+    multi_head_attention_vis = {
+        "visualization_name": "multi-head-attention",
+        "title": "Multi Head Attention",
+        "name": "multi_head_attention",
+        "attention_results": attention_results
+    }
+
     return {
-        "result": [processing_vis, graph_vis],
+        "result": [processing_vis, graph_vis, multi_head_attention_vis],
     }
