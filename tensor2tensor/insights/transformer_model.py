@@ -30,6 +30,8 @@ from tensor2tensor.data_generators import text_encoder
 from tensor2tensor.insights import graph
 from tensor2tensor.insights import nbest
 from tensor2tensor.insights import query_processor
+from tensor2tensor.insights import attention
+from tensor2tensor.insights import hardcoded_attention_data
 from tensor2tensor.utils import decoding
 from tensor2tensor.utils import trainer_lib
 from tensor2tensor.utils import usr_dir
@@ -295,7 +297,7 @@ class TransformerModel(query_processor.QueryProcessor):
     decoding_nbest = nbest.NBest()
     run_dirs = sorted(glob.glob(os.path.join(hook_dir, "run_*")))
     for run_dir in run_dirs:
-      
+
       dump_dir = tfdbg.DebugDumpDir(run_dir, validate=False)
       seq_datums = dump_dir.find(predicate=seq_filter)
       score_datums = dump_dir.find(predicate=scores_filter)
@@ -355,11 +357,23 @@ class TransformerModel(query_processor.QueryProcessor):
         },
     }
 
+    attentionData = hardcoded_attention_data.AttentionData()
+
+    inp_text = attentionData.get_in_text()
+    out_text = attentionData.get_out_text()
+    enc_atts, dec_atts, encdec_atts = attentionData.get_att_matrix()
+
+    attentionClass = attention.Attention()
+
+    attention_results = attentionClass.get_attentions_ds(inp_text, out_text, enc_atts, dec_atts, encdec_atts)
+
+    #print(attention_results)
+
     multi_head_attention_vis = {
         "visualization_name": "multi-head-attention",
         "title": "Multi Head Attention",
         "name": "multi_head_attention",
-        "word_heat_map": []
+        "attention_results": attention_results
     }
 
 

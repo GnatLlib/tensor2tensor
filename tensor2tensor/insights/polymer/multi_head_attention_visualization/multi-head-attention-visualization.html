@@ -26,15 +26,22 @@ limitations under the License.
 
 <dom-module id="multi-head-attention-visualization">
   <template>
-    <span style="user-select:none">
-      Layer: <select id="layer"></select>
-      Attention: <select id="att_type">
-        <option value="all">All</option>
-        <option value="inp_inp">Input - Input</option>
-        <option value="inp_out">Input - Output</option>
-        <option value="out_out">Output - Output</option>
-      </select>
-    </span>
+    <paper-dropdown-menu label="Layers">
+      <paper-listbox id="layer_dropdown" slot="dropdown-content" selected="{{selectedLayer_}}">
+      </paper-listbox>
+    </paper-dropdown-menu>
+
+    <paper-dropdown-menu label="Attention">
+      <paper-listbox slot="dropdown-content" selected="{{selectedAttentionType_}}">
+        <paper-item>All</paper-item>
+        <paper-item>Input - Input</paper-item>
+        <paper-item>Input - Output</paper-item>
+        <paper-item>Output - Output</paper-item>
+      </paper-listbox>
+    </paper-dropdown-menu>
+
+  <!-- <span>[[data]]</span> -->
+
   <div id='vis'></div>
   </template>
   <script src="multi-head-attention-visualization.js"></script>

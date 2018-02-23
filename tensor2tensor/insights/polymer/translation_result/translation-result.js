@@ -101,7 +101,8 @@ class TranslationResult extends Polymer.Element {
       if (visualizationResult.visualization_name == 'processing') {
         analysisEle.data = visualizationResult.query_processing;
       } else if (visualizationResult.visualization_name == 'multi-head-attention') {
-        analysisEle.data = visualizationResult.word_heat_map;
+        analysisEle.data = visualizationResult.attention_results;
+        console.log(visualizationResult.attention_results)
       } else if (visualizationResult.visualization_name == 'graph') {
         analysisEle.data = visualizationResult.search_graph;
       } else if (visualizationResult.visualization_name == 'nbest') {
