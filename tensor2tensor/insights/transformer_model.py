@@ -37,7 +37,6 @@ from tensor2tensor.utils import trainer_lib
 from tensor2tensor.utils import usr_dir
 
 from tensor2tensor.visualization import visualization
-from tensor2tensor.visualization import attention
 
 import tensorflow as tf
 from tensorflow.python import debug as tfdbg
@@ -183,7 +182,6 @@ class TransformerModel(query_processor.QueryProcessor):
     output_string, inp_text, out_text, att_mats = visualizer.get_vis_data_from_string(sess, input_sentence)
     print(output_string)
 
-    att_json = json.dumps(attention._get_attention(inp_text, out_text, *att_mats))
     sess.close()
 
     # Restore the checkpoint from a copy that the session doesn't screw up
@@ -359,13 +357,13 @@ class TransformerModel(query_processor.QueryProcessor):
 
     attentionData = hardcoded_attention_data.AttentionData()
 
-    inp_text = attentionData.get_in_text()
-    out_text = attentionData.get_out_text()
-    enc_atts, dec_atts, encdec_atts = attentionData.get_att_matrix()
+    #inp_text = attentionData.get_in_text()
+    #out_text = attentionData.get_out_text()
+    #enc_atts, dec_atts, encdec_atts = attentionData.get_att_matrix()
 
     attentionClass = attention.Attention()
 
-    attention_results = attentionClass.get_attentions_ds(inp_text, out_text, enc_atts, dec_atts, encdec_atts)
+    attention_results = attentionClass.get_attentions_ds(inp_text, out_text, *att_mats)
 
     #print(attention_results)
 
