@@ -35,7 +35,7 @@ class MultiHeadAttentionVisualization extends Polymer.Element {
     this.WIDTH = 2000;
     this.HEIGHT = 100;
     this.MATRIX_WIDTH = 150;
-    this.head_colours = d3.scaleOrdinal(d3.schemeCategory10);
+    this.head_colours = d3old.scale.category10();
     this.CHECKBOX_SIZE = 20;
     this.config = {};
   }
@@ -163,7 +163,7 @@ class MultiHeadAttentionVisualization extends Polymer.Element {
       vis.removeChild(vis.firstChild);
     }
 
-    var svg = d3.select(this.$.vis)
+    var svg = d3old.select(this.$.vis)
               .append('svg')
               .attr("width", this.WIDTH)
               .attr("height", this.HEIGHT);
@@ -224,9 +224,9 @@ class MultiHeadAttentionVisualization extends Polymer.Element {
                  .attr("width", this.BOXWIDTH/this.active_heads_())
                  .attr("height", function() { return _this.BOXHEIGHT; })
                  .attr("fill", function(d, i, j) {
-                    return _this.head_colours(j);
+                    return _this.head_colours(j % 10);
                   })
-                 .style("opacity", 0.1);
+                 .style("opacity", 0.0);
 
 
     var tokenContainer = textContainer.append("g").selectAll("g")
@@ -236,7 +236,7 @@ class MultiHeadAttentionVisualization extends Polymer.Element {
 
     tokenContainer.append("rect")
                   .classed("background", true)
-                  .style("opacity", 0.1)
+                  .style("opacity", 0.0)
                   .attr("fill", "lightgray")
                   .attr("x", left_pos)
                   .attr("y", function(d, i) {
@@ -268,7 +268,7 @@ class MultiHeadAttentionVisualization extends Polymer.Element {
     tokenContainer.on("mouseover", function(d, index) {
       textContainer.selectAll(".background")
                    .style("opacity", function(d, i) {
-                     return i == index ? 0.9 : 0.1;
+                     return i == index ? 1.0 : 0.0;
                    });
 
       svg.selectAll(".attention_heads").style("display", "none");
@@ -276,7 +276,7 @@ class MultiHeadAttentionVisualization extends Polymer.Element {
       svg.selectAll(".line_heads")  // To get the nesting to work.
          .selectAll(".att_lines")
          .attr("stroke-opacity", function(d) {
-            return 0.9;
+            return 0.0;
           })
          .attr("y1", function(d, i) {
           if (is_top) {
@@ -296,7 +296,7 @@ class MultiHeadAttentionVisualization extends Polymer.Element {
        .attr("x2", _this.BOXWIDTH + _this.MATRIX_WIDTH)
        .attr("stroke-width", 2)
        .attr("stroke", function(d, i, j) {
-          return _this.head_colours(j);
+          return _this.head_colours(j % 10);
         })
        .attr("stroke-opacity", function(d, i, j) {
         if (is_top) {d = d[0];} else {d = d[1];}
@@ -304,10 +304,10 @@ class MultiHeadAttentionVisualization extends Polymer.Element {
           if (d) {
             return d[index];
           } else {
-            return 0.1;
+            return 0.0;
           }
         } else {
-            return 0.1;
+            return 0.0;
           }
         });
 
@@ -321,8 +321,9 @@ class MultiHeadAttentionVisualization extends Polymer.Element {
            .attr("x", function(d, i, j) { return the_left_pos + _this.box_offset_(j); })
            .attr("y", function(d, i) { return (i+1) * _this.BOXHEIGHT; })
            .attr("width", _this.BOXWIDTH/_this.active_heads_())
-           .attr("height", function() { return _this.BOXHEIGHT; })
-           .style("opacity", function(d, i, j) {
+           .attr("height", function() { 
+            return _this.BOXHEIGHT;
+          }).style("opacity", function(d, i, j) {
               if (is_top) {
                 d = d[0];
               } else {
@@ -332,10 +333,10 @@ class MultiHeadAttentionVisualization extends Polymer.Element {
                 if (d) {
                   return d[index];
                 } else {
-                  return 0.1;
+                  return 0.0;
                 }
               else
-                return 0.1;
+                return 0.0;
 
            });
       }
@@ -344,15 +345,15 @@ class MultiHeadAttentionVisualization extends Polymer.Element {
     });
 
     textContainer.on("mouseleave", function() {
-      d3.select(this).selectAll(".background")
-                     .style("opacity", 0.1);
+      d3old.select(this).selectAll(".background")
+                     .style("opacity", 0.0);
 
-      svg.selectAll(".att_lines").attr("stroke-opacity", 0.1);
+      svg.selectAll(".att_lines").attr("stroke-opacity", 0.0);
       svg.selectAll(".attention_heads").style("display", "inline");
       svg.selectAll(".attention_boxes")
          .selectAll("g")
          .selectAll("rect")
-         .style("opacity", 0.1);
+         .style("opacity", 0.0);
     });
   }
 
@@ -364,8 +365,9 @@ class MultiHeadAttentionVisualization extends Polymer.Element {
                   .append("g")
                   .classed("line_heads", true)
                   .selectAll("line")
-                  .data(function(d){return d;})
-                  .enter()
+                  .data(function(d) {
+                    return d;
+                  }).enter()
                   .append("line").classed("att_lines", true);
   }
 
@@ -382,12 +384,12 @@ class MultiHeadAttentionVisualization extends Polymer.Element {
           .attr("y2", (a+1) * _this.BOXHEIGHT + (_this.BOXHEIGHT/2))
           .attr("x2", _this.BOXWIDTH + _this.MATRIX_WIDTH)
           .attr("stroke-width", 2)
-          .attr("stroke", this.head_colours(h))
+          .attr("stroke", this.head_colours(h % 10))
           .attr("stroke-opacity", function() {
             if (_this.config.head_vis[h]) {
               return attention_heads[h][a][s]/_this.active_heads_();
             } else {
-              return 0.1;
+              return 0.0;
             }
           }());
         }
@@ -403,7 +405,7 @@ class MultiHeadAttentionVisualization extends Polymer.Element {
                                     .enter()
                                     .append("rect")
                                     .attr("fill", function(d, i) {
-                                      return _this.head_colours(i);
+                                      return _this.head_colours(i % 10);
                                     })
                                     .attr("x", function(d, i) {
                                       return (i+1) * _this.CHECKBOX_SIZE;
@@ -416,7 +418,7 @@ class MultiHeadAttentionVisualization extends Polymer.Element {
       checkboxContainer.selectAll("rect")
                                 .data(_this.config.head_vis)
                                 .attr("fill", function(d, i) {
-                                  var head_colour = _this.head_colours(i);
+                                  var head_colour = _this.head_colours(i % 10);
                                   var colour = d ? head_colour : _this.lighten_(head_colour);
                                   return colour;
                                 });
@@ -445,8 +447,8 @@ class MultiHeadAttentionVisualization extends Polymer.Element {
   }
 
   lighten_(colour) {
-    var c = d3.hsl(colour);
-    var increment = (1 - c.l) * 0.7;
+    var c = d3old.hsl(colour);
+    var increment = (1 - c.l) * 0.6;
     c.l += increment;
     c.s -= increment;
     return c;
