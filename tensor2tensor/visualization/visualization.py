@@ -68,7 +68,7 @@ class AttentionVisualizer(object):
     integers = list(np.squeeze(integers))
     return self.encoders['inputs'].decode_list(integers)
 
-  def get_vis_data_from_string(self, sess, input_string):
+  def get_vis_data_from_string(self, sess, input_string, out = None):
     """Constructs the data needed for visualizing attentions.
 
     Args:
@@ -94,10 +94,11 @@ class AttentionVisualizer(object):
     """
     encoded_inputs = self.encode(input_string)
 
-    # Run inference graph to get the translation.
-    out = sess.run(self.samples, {
-        self.inputs: encoded_inputs,
-    })
+    if out is None:
+      # Run inference graph to get the translation.
+      out = sess.run(self.samples, {
+          self.inputs: encoded_inputs,
+      })
 
     # Run the decoded translation through the training graph to get the
     # attention tensors.

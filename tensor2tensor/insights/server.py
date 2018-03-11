@@ -24,6 +24,7 @@ from flask import send_from_directory
 from gunicorn.app.base import BaseApplication
 from gunicorn.six import iteritems
 from tensor2tensor.insights import transformer_model
+from tensor2tensor.insights import indexing
 
 import tensorflow as tf
 
@@ -95,6 +96,9 @@ def main(_):
         "name": language["name"],
     }
 
+  source_language_data_file = configuration["source_language_data_file"]
+  target_language_data_file = configuration["target_language_data_file"]
+
   # Create flask to serve all paths starting with '/polymer' from the static
   # path.  This is to served non-vulcanized components.
   app = Flask(
@@ -133,6 +137,16 @@ def main(_):
       })
     return jsonify({
         "configuration": configuration_list
+    })
+
+  @app.route("/api/corpussearch/", methods=["GET"])
+  def corpus_search():
+    query = request.args.get("query")
+    query_index = indexing.QueryIndex("demoIndex", source_language_data_file, target_language_data_file)
+    query_result = query_index.searchIndex(query)
+	
+    return jsonify({
+        "result": query_result
     })
 
   @app.route("/debug", methods=["GET"])
