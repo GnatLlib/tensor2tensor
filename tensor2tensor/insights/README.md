@@ -31,7 +31,6 @@ The models run by server is then configured by a JSON version of the
 InsightsConfiguration protocol buffer.  For instance, a sample configuration
 for the translate_ende_wmt32k problem would be:
 
-
   {
     "configuration": [{
       "source_language": "en",
