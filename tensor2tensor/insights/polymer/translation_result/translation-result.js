@@ -88,6 +88,8 @@ class TranslationResult extends Polymer.Element {
       let analysisEle = document.createElement(
           visualizationResult.visualization_name + '-visualization');
 
+      // console.log(visualizationResult.visualization_name);
+
       // Set the generic attributes.
       analysisEle.name = visualizationResult.name;
       analysisEle.model = this.result.model;
@@ -98,8 +100,9 @@ class TranslationResult extends Polymer.Element {
       // protobuffer field names so we don't need this mapping.
       if (visualizationResult.visualization_name == 'processing') {
         analysisEle.data = visualizationResult.query_processing;
-      } else if (visualizationResult.visualization_name == 'attention') {
-        analysisEle.data = visualizationResult.word_heat_map;
+      } else if (visualizationResult.visualization_name == 'multi-head-attention') {
+        analysisEle.data = visualizationResult.attention_results;
+        console.log(visualizationResult.attention_results)
       } else if (visualizationResult.visualization_name == 'graph') {
         analysisEle.data = visualizationResult.search_graph;
       } else if (visualizationResult.visualization_name == 'nbest') {

@@ -21,6 +21,7 @@ import glob
 import os
 import shutil
 import time
+import json
 
 import numpy as np
 
@@ -29,9 +30,13 @@ from tensor2tensor.data_generators import text_encoder
 from tensor2tensor.insights import graph
 from tensor2tensor.insights import nbest
 from tensor2tensor.insights import query_processor
+from tensor2tensor.insights import attention
+from tensor2tensor.insights import hardcoded_attention_data
 from tensor2tensor.utils import decoding
 from tensor2tensor.utils import trainer_lib
 from tensor2tensor.utils import usr_dir
+
+from tensor2tensor.visualization import visualization
 
 import tensorflow as tf
 from tensorflow.python import debug as tfdbg
@@ -110,6 +115,7 @@ class TransformerModel(query_processor.QueryProcessor):
     FLAGS.output_dir = transformer_config["model_dir"]
     usr_dir.import_usr_dir(FLAGS.t2t_usr_dir)
     data_dir = os.path.expanduser(transformer_config["data_dir"])
+    FLAGS.data_dir = data_dir
 
     # Create the basic hyper parameters.
     self.hparams = trainer_lib.create_hparams(
@@ -139,19 +145,9 @@ class TransformerModel(query_processor.QueryProcessor):
     for run_dir in run_dirs:
       shutil.rmtree(run_dir)
 
-  def process(self, query):
-    """Returns the visualizations for query.
-
-    Args:
-      query: The query to process.
-
-    Returns:
-      A dictionary of results with processing and graph visualizations.
-    """
-    tf.logging.info("Processing new query [%s]" %query)
-
+  def process_translation(self, query):
     # Create the new TFDBG hook directory.
-    hook_dir = "/tmp/t2t_server_dump/request_%d" %int(time.time())
+    hook_dir = "/tmp/t2t_server_dump/request_%d" % int(time.time())
     os.makedirs(hook_dir)
     hooks = [tfdbg.DumpingDebugHook(hook_dir, watch_fn=topk_watch_fn)]
 
@@ -166,8 +162,8 @@ class TransformerModel(query_processor.QueryProcessor):
         x = [1, 100, len(input_ids)] + input_ids
         x += [0] * (self.const_array_size - len(x))
         d = {
-            "inputs": np.array(x).astype(np.int32),
-            "problem_choice": np.array(0).astype(np.int32)
+          "inputs": np.array(x).astype(np.int32),
+          "problem_choice": np.array(0).astype(np.int32)
         }
         yield d
 
@@ -178,7 +174,7 @@ class TransformerModel(query_processor.QueryProcessor):
       # TODO(kstevens): Make this method public
       # pylint: disable=protected-access
       return decoding._interactive_input_tensor_to_features_dict(
-          example, self.hparams)
+        example, self.hparams)
 
     # Make the prediction for the current query.
     result_iter = self.estimator.predict(input_fn, hooks=hooks)
@@ -186,6 +182,9 @@ class TransformerModel(query_processor.QueryProcessor):
     for result in result_iter:
       break
 
+    return hook_dir, result
+
+  def get_graph_vis(self, hook_dir):
     # Extract the beam search information by reading the dumped TFDBG event
     # tensors.  We first read and record the per step beam sequences then record
     # the beam scores.  Afterwards we align the two sets of values to create the
@@ -252,12 +251,57 @@ class TransformerModel(query_processor.QueryProcessor):
           edge.data["log_probability"] = score
           edge.data["total_log_probability"] = score
 
+    # Create the graph visualization data structure.
+    graph_vis = {
+      "visualization_name": "graph",
+      "title": "Graph",
+      "name": "graph",
+      "search_graph": decoding_graph.to_dict(),
+    }
+
+    return graph_vis
+
+
+  def get_processing_vis(self, query, output_ids):
+    output_pieces = self.targets_vocab.decode_list(output_ids)
+    output_token = [{"text": piece} for piece in output_pieces]
+    output = self.targets_vocab.decode(output_ids)
+
+    source_steps = [{
+      "step_name": "Initial",
+      "segment": [{
+        "text": query
+      }],
+    }]
+
+    target_steps = [{
+      "step_name": "Initial",
+      "segment": output_token,
+    }, {
+      "step_name": "Final",
+      "segment": [{
+        "text": output
+      }],
+    }]
+
+    processing_vis = {
+      "visualization_name": "processing",
+      "title": "Processing",
+      "name": "processing",
+      "query_processing": {
+        "source_processing": source_steps,
+        "target_processing": target_steps,
+      },
+    }
+    return processing_vis
+
+  def get_nbest_vis(self, hook_dir):
     # Extract the NBest search information by reading the dumped TFDBG event
     # tensors.
     decoding_nbest = nbest.NBest()
     run_dirs = sorted(glob.glob(os.path.join(hook_dir, "run_*")))
     for run_dir in run_dirs:
-      
+
       dump_dir = tfdbg.DebugDumpDir(run_dir, validate=False)
       seq_datums = dump_dir.find(predicate=seq_filter)
       score_datums = dump_dir.find(predicate=scores_filter)
@@ -271,52 +315,6 @@ class TransformerModel(query_processor.QueryProcessor):
             pieces = self.targets_vocab.decode_list(trimmed_sequence)
             t = decoding_nbest.get_sentence(sequence_key(trimmed_sequence), pieces, score)
 
-    # Delete the hook dir to save disk space
-    shutil.rmtree(hook_dir)
-
-    # Create the graph visualization data structure.
-    graph_vis = {
-        "visualization_name": "graph",
-        "title": "Graph",
-        "name": "graph",
-        "search_graph": decoding_graph.to_dict(),
-    }
-
-    # Create the processing visualization data structure.
-    # TODO(kstevens): Make this method public
-    # pylint: disable=protected-access
-    output_ids = decoding._save_until_eos(result["outputs"].flatten(), False)
-    output_pieces = self.targets_vocab.decode_list(output_ids)
-    output_token = [{"text": piece} for piece in output_pieces]
-    output = self.targets_vocab.decode(output_ids)
-
-    source_steps = [{
-        "step_name": "Initial",
-        "segment": [{
-            "text": query
-        }],
-    }]
-
-    target_steps = [{
-        "step_name": "Initial",
-        "segment": output_token,
-    }, {
-        "step_name": "Final",
-        "segment": [{
-            "text": output
-        }],
-    }]
-
-    processing_vis = {
-        "visualization_name": "processing",
-        "title": "Processing",
-        "name": "processing",
-        "query_processing": {
-            "source_processing": source_steps,
-            "target_processing": target_steps,
-        },
-    }
-
     nbest_vis = {
       "visualization_name": "nbest",
       "title": "NBest",
@@ -324,6 +322,85 @@ class TransformerModel(query_processor.QueryProcessor):
       "nbest_data": decoding_nbest.to_dict(),
     }
 
+    return nbest_vis
+
+  def get_multi_attention_vis(self, query, output_ids):
+    # Get attention visualization data TEMPORARY WORKAROUND USING A SEPERATE SESSION
+    CHECKPOINT = FLAGS.output_dir
+    checkpoint_file = os.path.join(CHECKPOINT, "checkpoint")
+    checkpoint_restore = os.path.join(CHECKPOINT, "checkpoint_restore")
+
+    problem_name = 'translate_ende_wmt32k'
+    model_name = "transformer"
+    hparams_set = "transformer_base_single_gpu"
+    data_dir = FLAGS.data_dir
+    visualizer = visualization.AttentionVisualizer(hparams_set, model_name, data_dir, problem_name, beam_size=1)
+
+    #copy checkpoint_file so that it can be restored later
+    shutil.copyfile(checkpoint_file, checkpoint_restore)
+
+    tf.Variable(0, dtype=tf.int64, trainable=False, name='global_step')
+
+    sess = tf.train.MonitoredTrainingSession(
+      checkpoint_dir=CHECKPOINT,
+      save_summaries_secs=0,
+    )
+
+    # Get att_mats
+    output_string, inp_text, out_text, att_mats = visualizer.get_vis_data_from_string(sess, query, output_ids)
+
+    sess.close()
+
+    # Restore the checkpoint from a copy that the session doesn't screw up
+    open(checkpoint_file, "w").writelines([l for l in open(checkpoint_restore).readlines()])
+
+    attention_class = attention.Attention()
+
+    attention_results = attention_class.get_attentions_ds(inp_text, out_text, *att_mats)
+
+    # print(attention_results)
+
+    multi_head_attention_vis = {
+      "visualization_name": "multi-head-attention",
+      "title": "Multi Head Attention",
+      "name": "multi_head_attention",
+      "attention_results": attention_results
+    }
+
+    return multi_head_attention_vis
+
+  def process(self, query):
+    """Returns the visualizations for query.
+
+    Args:
+      query: The query to process.
+
+    Returns:
+      A dictionary of results with processing and graph visualizations.
+    """
+
+    # Run translation process, creating a new hook_dir that tfdbg dump will be dumped to
+    hook_dir, result = self.process_translation(query)
+
+    # Generate graph visualization based on tfdbg dump
+    graph_vis = self.get_graph_vis(hook_dir)
+
+    # Generate nbest visualization based on tfdbg dump
+    nbest_vis = self.get_nbest_vis(hook_dir)
+
+    # Delete the hook dir to save disk space
+    shutil.rmtree(hook_dir)
+
+    # Get the output_ids from the translation result that will be needed to generate attention and processing vis
+    output_ids = decoding._save_until_eos(result["outputs"].flatten(), False)
+    output_ids = np.append(output_ids, [1])
+
+    # Generate processing visualization
+    processing_vis = self.get_processing_vis(query, output_ids)
+
+    # Generate multi-head attention visualization
+    multi_head_attention_vis = self.get_multi_attention_vis(query, output_ids)
+
     return {
-        "result": [processing_vis, graph_vis, nbest_vis],
+        "result": [processing_vis, graph_vis, nbest_vis, multi_head_attention_vis],
     }

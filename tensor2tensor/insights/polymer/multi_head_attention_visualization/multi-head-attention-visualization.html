@@ -1,0 +1,48 @@
+<!--
+@license
+Copyright 2018 The Tensor2Tensor Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+   http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+
+<link rel="import" href="../polymer/polymer.html">
+
+<link rel="import" href="../iron-flex-layout/iron-flex-layout-classes.html">
+<link rel="import" href="../iron-icon/iron-icon.html">
+<link rel="import" href="../iron-icons/iron-icons.html">
+
+<link rel="import" href="../paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../paper-slider/paper-slider.html">
+
+<dom-module id="multi-head-attention-visualization">
+  <template>
+    <paper-dropdown-menu label="Layers">
+      <paper-listbox id="layer_dropdown" slot="dropdown-content" selected="{{selectedLayer_}}">
+      </paper-listbox>
+    </paper-dropdown-menu>
+
+    <paper-dropdown-menu label="Attention">
+      <paper-listbox slot="dropdown-content" selected="{{selectedAttentionType_}}">
+        <paper-item>All</paper-item>
+        <paper-item>Input - Input</paper-item>
+        <paper-item>Input - Output</paper-item>
+        <paper-item>Output - Output</paper-item>
+      </paper-listbox>
+    </paper-dropdown-menu>
+
+  <!-- <span>[[data]]</span> -->
+
+  <div id='vis'></div>
+  </template>
+  <script src="multi-head-attention-visualization.js"></script>
+</dom-module>

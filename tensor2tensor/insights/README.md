@@ -11,6 +11,8 @@ Before using the Insights server, you must install [Bower](https://bower.io/)
 which we use to manage our web component dependencies.  You can easily install
 this with the [Node Package Manager](https://www.npmjs.com/).
 
+You must install [Whoosh](https://pypi.python.org/pypi/Whoosh/), which can be achieved by `pip install whoosh`
+
 ## Setup Instructions
 
 After training a model, such as according to the Quick Start guide, you can run
@@ -26,10 +28,9 @@ popd
 ```
 
 The models run by server is then configured by a JSON version of the
-InsightsConfiguration protocol buffer.  Using the model trained in the Quick
-Start guide, a sample configuration would be:
+InsightsConfiguration protocol buffer.  For instance, a sample configuration
+for the translate_ende_wmt32k problem would be:
 
-```
   {
     "configuration": [{
       "source_language": "en",
@@ -52,18 +53,34 @@ Start guide, a sample configuration would be:
       "name": "German"
     }]
   }
-```
 
-With that saved to `configuration.json`, run the following:
+
+Replace the angle brackets with a string containing what is correct for you.
+source_language_data_file and target_language_data_file allow you to use the
+corpus search functionality. If this functionality is not required, simply
+set the values to "".
+
+With that saved to `configuration.json`, run the following, again substituting
+anything in angle brackets:
 
 ```
 t2t-insights-server \
-  --configuration=configuration.json \
-  --static_path=`pwd`/tensor2tensor/insights/polymer
+  --configuration=<path to configuration.json> \
+  --static_path=<a static path to tensor2tensor/insights/polymer. The quickest way to do this is to substitute this field with `pwd` and run this command within the polymer directory itself>
 ```
 
 This will bring up a minimal [Flask](http://flask.pocoo.org/) REST service
 served by a [GUnicorn](http://gunicorn.org/) HTTP Server.
+
+## Corpus Search
+To see which training data might be associated with a given query, you can use
+the corpus search functionality. In the configuration.json, provide 2 files with
+the training data from the source and target languages. On the first query,
+an index of the training data will be created and saved in an "indexes" folder,
+wherever the tensor2tensor-insights-server command is being run. This may require
+tensor2tensor-insights-server to be run with sudo. As long as the "indexes" folder
+is not removed, this index will be used automatically in future runtimes of the
+server, and will not need to be recreated.
 
 ## Features to be developed
 
