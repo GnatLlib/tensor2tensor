@@ -156,9 +156,8 @@ class NBestVisualization extends Polymer.Element {
       .attr("transform", "translate(" + margins[1] + "," + margins[0] + ")");
 
     var textValues = dataset.map(function(d){ return d.text });
-
     var totalValues = dataset.map(function(d){ return d.totalscore });
-    console.log(totalValues);
+    var tokenValues = dataset.map(function(d){ return d.score });
 
     // Call the x axis in a group tag
     svg.append("g")
@@ -185,17 +184,21 @@ class NBestVisualization extends Polymer.Element {
       .datum(dataset) // 10. Binds data to the line 
       .attr("class", "line") // Assign a class for styling
       .attr("d", line); // 11. Calls the line generator 
-    /*
-    // Appends a circle for each datapoint 
-    svg.selectAll(".dot")
-      .data(dataset)
-      .enter().append("circle") // Uses the enter().append() method
-      .attr("class", "dot") // Assign a class for styling
-      .attr("cx", function(d, i) { return xScale(i) })
-      .attr("cy", function(d) { return yScale(d.score) })
-      .attr("r", 5)
 
-    */
+    svg.append("text")
+      .attr("transform", "translate("+(width*((dataset.length-1)/dataset.length)+10)+","+((1-(tokenValues[(dataset.length)-1]))*height)+")")
+      .attr("dy", ".35em")
+      .attr("text-anchor", "start")
+      .style("fill", "orange")
+      .text("Token");
+
+    svg.append("text")
+      .attr("transform", "translate("+(width*((dataset.length-1)/dataset.length)+10)+","+((1-(totalValues[(dataset.length)-1]))*height)+")")
+      .attr("dy", ".35em")
+      .attr("text-anchor", "start")
+      .style("fill", "steelblue")
+      .text("Total");
+
     var nodeEnter = svg.selectAll("circle")
       .data(dataset)
       .enter()
