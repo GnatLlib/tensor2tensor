@@ -31,32 +31,35 @@ The models run by server is then configured by a JSON version of the
 InsightsConfiguration protocol buffer.  For instance, a sample configuration
 for the translate_ende_wmt32k problem would be:
 
-  {
-    "configuration": [{
-      "source_language": "en",
-      "target_language": "de",
-      "label": "transformers_wmt32k",
-      "transformer": {
-        "model": "transformer",
-        "model_dir": "/tmp/t2t/train",
-        "data_dir": "/tmp/t2t/data",
-        "hparams": "",
-        "hparams_set": "transformer_base_single_gpu",
-        "problems": "translate_ende_wmt32k"
-      }
-    }],
-    "language": [{
-      "code": "en",
-      "name": "English"
-    },{
-      "code": "de",
-      "name": "German"
-    }]
-  }
-
+```
+{
+  "configuration": [{
+    "source_language": "en",
+    "target_language": "de",
+    "label": "translate_ende",
+    "transformer": {
+      "model": "transformer",
+      "model_dir": <path to the folder containing the full model>,
+      "data_dir": <path to the data in question. For the translate_ende_wmt32k problem, this directory should hold the vocab.ende.32768 file>,
+      "hparams": "",
+      "hparams_set": "transformer_base_single_gpu",
+      "problems": "translate_ende_wmt32k"
+    }
+  }],
+ "language": [{
+    "code": "en",
+    "name": "English"
+  },{
+    "code": "de",
+    "name": "German"
+  }],
+  "tfrecord_files": <paths to tfrecord files, wildcard notation supported>,
+  "vocab_file": <path to vocab file with input and target words>
+}
+```
 
 Replace the angle brackets with a string containing what is correct for you.
-source_language_data_file and target_language_data_file allow you to use the
+tfrecord_files and vocab_file allow you to use the
 corpus search functionality. If this functionality is not required, simply
 set the values to "".
 
@@ -74,8 +77,8 @@ served by a [GUnicorn](http://gunicorn.org/) HTTP Server.
 
 ## Corpus Search
 To see which training data might be associated with a given query, you can use
-the corpus search functionality. In the configuration.json, provide 2 files with
-the training data from the source and target languages. On the first query,
+the corpus search functionality. In the configuration.json, provide 2 filepaths with
+the tfrecords of the training data and the vocabulary file. On the first query,
 an index of the training data will be created and saved in an "indexes" folder,
 wherever the tensor2tensor-insights-server command is being run. This may require
 tensor2tensor-insights-server to be run with sudo. As long as the "indexes" folder
