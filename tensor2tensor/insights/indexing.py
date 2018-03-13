@@ -34,10 +34,10 @@ class QueryIndex:
 	""" Creates a QueryIndex object and the associated index file
 	to go with it, or if an index file of the desired name already
 	exists, creates a QueryIndex object that accesses that file.
-	
+
 	Args:
 		name - name of the desired index
-		recordFiles - filename pattern for files containing tfrecords 
+		recordFiles - filename pattern for files containing tfrecords
 			with input and target values to be indexed.
 		vocabFile - filename of a file containing the vocabulary for
 			the tfrecord inputs and targets
@@ -45,8 +45,8 @@ class QueryIndex:
 
 	"""Data locations, replace with directory to respective language list
 	Hardcoded for demo purposes
-	
-	Data format expected: translation pair per line in each document 
+
+	Data format expected: translation pair per line in each document
 	"""
 
 	def __init__(self,name, recordFiles, vocabFile):
@@ -56,7 +56,7 @@ class QueryIndex:
 		self.schema = Schema(query=TEXT(stored=True), target=TEXT(stored=True))
 		if index.exists_in("indexes", indexname=name):
 			self.ix = index.open_dir("indexes", name)
-			
+
 		else:
 			if recordFiles == "" or vocabFile == "":
 				print 'Cannot create index without data files. Please provide the file paths in configuration.json'
@@ -66,22 +66,22 @@ class QueryIndex:
 				self.createStringFilesFromTfRecords(records, vocabFile)
 				self.buildIndex(INPUTS_FILE,TARGETS_FILE)
 
-	
-	""" 
+
+	"""
 	On init, if an index doesn't exist, build one
 	"""
-	
+
 	""" USE THIS METHOD INSTEAD WHEN YOU WANT THE ENTIRE DATA FILE
 		def buildIndex(self, queryLang, targLang):
 		qFile = open(queryLang, 'r')
 		tFile = open(targLang, 'r')
 		writer = self.ix.writer()
-		
+
 		allLinesIndexed = False
 		while allLinesIndexed == False:
 			q = unicode(qFile.readline().strip(), "utf-8") #input sanitization
 			t = unicode(tFile.readline().strip(), "utf-8")
-			
+
 			if q == '' or t == '':
 				allLinesIndexed = False
 			else:
@@ -94,7 +94,7 @@ class QueryIndex:
 		qFile = open(queryLang, 'r')
 		tFile = open(targLang, 'r')
 		writer = self.ix.writer()
-		
+
 		for i in range(10000): #small value for now just to test
 			q = unicode(qFile.readline().strip(), "utf-8") #input sanitization
 			t = unicode(tFile.readline().strip(), "utf-8")
@@ -106,14 +106,14 @@ class QueryIndex:
 
 	""" Adds the query-target pair passed to this method to the
 	indexing file this object represents.
-	
+
 	If there is already a pair with the passed query in the index,
 	that pair is replaced with the one passed to this method.
 	NOTE: This is currently not working as intended.
-	
+
 	Note that these query-target pairs will always be stored as
 	Unicode.
-	
+
 	Args:
 	   qry, trgt - the pair in question
 	"""
@@ -121,27 +121,28 @@ class QueryIndex:
 		self.ix.writer().add_document(query=unicode(qry),
 									 target=unicode(trgt))
 		self.ix.writer().commit()
-	
+
 	""" Returns a list of query-target pairs that match the search
 	query passed to this method. This search is constrained to take
 	at most 30 seconds.
-	
+
 	Args:
 	   sq - the search query
 	"""
 	def searchIndex(self, sq):
 		indexParser = MultifieldParser(["query", "target"], schema=self.schema).parse(unicode(sq))
+		print indexParser
 		with self.ix.searcher() as s:
 			collector = s.collector(limit=None)
 			timed_collector = TimeLimitCollector(collector, timelimit=30.0)
-			
+
 			try:
 				results = s.search_with_collector(indexParser, timed_collector)
 			except TimeLimit:
 				print 'Search ime limit of 30 seconds exceeded.'
-			
+
 			hits = timed_collector.results()
-			
+
 			# Convert result structure into a jsonable list
 			# TODO: improve this structure
 			matches = []
@@ -169,7 +170,7 @@ class QueryIndex:
 			for raw_record in reader:
 				record = tf.train.Example()
 				record.ParseFromString(raw_record)
-				
+
 				records.append(record)
 				if len(records) % 10000 == 0:
 					print "read: %d" % len(records)
@@ -179,11 +180,17 @@ class QueryIndex:
 
 
 	def createStringFilesFromTfRecords(self, records, vocab):
-		f=open(vocab)
+		dir_path = os.path.dirname(os.path.realpath(__file__))
+		#print dir_path
+		print os.path.abspath(vocab)
+
+		f=open(os.path.abspath(vocab))
 		# TODO check if vocab file is always small enough to read into memory
 		lines = f.readlines()
 		input = ""
 		target = ""
+
+
 		inputs_file = open(INPUTS_FILE,"w+")
 		targets_file = open(TARGETS_FILE,"w+")
 		for record in records:

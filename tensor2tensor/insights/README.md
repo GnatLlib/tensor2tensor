@@ -53,8 +53,8 @@ for the translate_ende_wmt32k problem would be:
     "code": "de",
     "name": "German"
   }],
-  "tfrecord_files": <paths to tfrecord files, wildcard notation supported>,
-  "vocab_file": <path to vocab file with input and target words>
+  "tfrecord_files": <paths to tfrecord files, working directory is the project root, wildcard notation supported>,
+  "vocab_file": <path to vocab file with input and target words, working directory is the project root>
 }
 ```
 

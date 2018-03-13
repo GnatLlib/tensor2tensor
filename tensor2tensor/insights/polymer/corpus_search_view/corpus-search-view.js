@@ -16,7 +16,7 @@
  */
 
 /**
- * 
+ *
  *
  * ### Usage
  *
@@ -77,7 +77,7 @@ class CorpusSearchView extends Polymer.Element {
       this.set('displayResult', false);
     else
       this.set('displayResult', true);
-  }  
+  }
 
   /**
    * Noop
