@@ -39,15 +39,17 @@ class Sentence(object):
     self.score = 0
     self.tokens = []
 
-  def add_tokens(self, token_list):
+  def add_tokens(self, token_list, scores, token_scores):
     """Add tokens to the Sentence.
 
     Args:
       token_list: list of the token words in the sentence
+      scores: list of the total scores in the sentence
+      token_scores: lst of token_scores in the sentence
     """
     index = 0
-    for token in token_list:
-        t = Token(index, token)
+    for token,score,token_score in zip(token_list,scores,token_scores):
+        t = Token(index, token, score, token_score)
         self.tokens.append(t)
         index+=1
 
@@ -82,7 +84,7 @@ class Token(object):
     data: Arbitrary data for this Edge.
   """
 
-  def __init__(self, idx, text):
+  def __init__(self, idx, text, score, token_score):
     """Initialize the Token.
 
     Args:
@@ -90,8 +92,8 @@ class Token(object):
     """
     self.idx = idx
     self.text = text
-    # TODO: change this to get the actual value
-    self.score = random.uniform(0.5,1)
+    self.score = score
+    self.token_score = token_score
 
   def to_dict(self):
     """Returns a simplified dictionary representing the Token.
@@ -102,6 +104,7 @@ class Token(object):
     return {
         "text": self.text,
         "score": self.score,
+        "tokenscore": self.token_score
     }
 
   def __str__(self):
@@ -120,36 +123,42 @@ class NBest(object):
     self.sentences = []
     self.sentence_map = {}
 
-  def new_sentence(self, tokens, score):
+  def new_sentence(self, tokens, score, scores, token_scores):
     """Creates and returns a new vertex.
 
     Args:
       tokens: Tokens in the sentence
       score: Score of the sentence
+      scores: Total score at each token
+      token_scores: Token score at each token
+
 
     Returns:
       A new Sentence instance with a unique index.
     """
     sentence = Sentence(len(self.sentences))
-    sentence.add_tokens(tokens)
+    sentence.add_tokens(tokens, scores, token_scores)
     sentence.add_score(score)
     self.sentences.append(sentence)
     return sentence
 
-  def get_sentence(self, idx, tokens, score):
+  def get_sentence(self, idx, tokens, score, scores, token_scores):
     """Returns or Creates a sentence mapped by idx.
 
     Args:
       idx: Index of the sentence
       tokens: Tokens in the sentence
-      score: Score of the sentence
+      score: Total score of the sentence
+      scores: Total scores at each token in sentence
+      token_scores: Token scores at each token in sentence
+
 
     Returns:
       A the Sentence mapped to by idx.
     """
     if idx in self.sentence_map:
       return self.sentence_map[idx]
-    sentence = self.new_sentence(tokens, score)
+    sentence = self.new_sentence(tokens, score, scores, token_scores)
     self.sentence_map[idx] = sentence
     return sentence
 

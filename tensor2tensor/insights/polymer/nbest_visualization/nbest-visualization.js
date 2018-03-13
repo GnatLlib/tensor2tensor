@@ -103,11 +103,8 @@ class NBestVisualization extends Polymer.Element {
    */
   prepareData_() {
     var dataset = this.data.sentence[this.selected_].tokens;
-    var curr_score = 1;
-    dataset.forEach(function(token) {
-      curr_score *= token.score;
-      token.totalscore = curr_score;
-    });
+
+
     return dataset;
   }
 
@@ -139,11 +136,11 @@ class NBestVisualization extends Polymer.Element {
     // Create line (not working)
     var line = d3.line()
       .x(function(d, i) { return xScale(i); }) // set the x values for the line generator
-      .y(function(d) { return yScale(d.score); }) // set the y values for the line generator
+      .y(function(d) { return yScale(d.tokenscore); }) // set the y values for the line generator
 
     var line2 = d3.line()
       .x(function(d, i) { return xScale(i); }) // set the x values for the line generator
-      .y(function(d) { return yScale(d.totalscore); }) // set the y values for the line generator 
+      .y(function(d) { return yScale(d.score); }) // set the y values for the line generator
 
     // Add the SVG to the page
     var svg = d3.select(this.$.chart)
@@ -157,7 +154,7 @@ class NBestVisualization extends Polymer.Element {
 
     var textValues = dataset.map(function(d){ return d.text });
 
-    var totalValues = dataset.map(function(d){ return d.totalscore });
+    var totalValues = dataset.map(function(d){ return d.score });
     console.log(totalValues);
 
     // Call the x axis in a group tag
@@ -203,13 +200,13 @@ class NBestVisualization extends Polymer.Element {
 
     nodeEnter.insert("circle")
       .attr("cx", function (d, i) { return xScale(i) })
-      .attr("cy", function (d) { return yScale(d.score) })
+      .attr("cy", function (d) { return yScale(d.tokenscore) })
       .attr("class", "dot")
       .attr("r", 5)
 
     nodeEnter.insert("circle")
       .attr("cx", function (d, i) { return xScale(i) })
-      .attr("cy", function (d) { return yScale(d.totalscore) })
+      .attr("cy", function (d) { return yScale(d.score) })
       .attr("class", "dot2")
       .attr("r", 5)
     }
