@@ -60,8 +60,8 @@ def topk_watch_fn(feeds, fetches):
   del fetches, feeds
   return tfdbg.WatchOptions(
       node_name_regex_whitelist=
-      "(.*grow_(finished|alive)_(topk_scores|topk_seq).*)|(.*transformer/while/TopKV2_1.*)|"
-      "(.*transformer/while/sub_1.*)|(.*transformer/while/tokenscores.*)",
+      "(.*grow_(finished|alive)_(topk_scores|topk_seq).*)|(.*transformer/while/seq.*)|"
+      "(.*transformer/while/sub_1.*)|(.*transformer/while/scores.*)",
       debug_ops=["DebugIdentity"])
 
 def seq_filter(datum, tensor):
@@ -327,16 +327,18 @@ class TransformerModel(query_processor.QueryProcessor):
       alive_sequences = deque()
       finished_sequences = deque()
       token_scores = deque()
+      token_scores_finished = deque()
 
 
       # Record the sequence token_ids, total_scores and token_scores of sequences as they are built up
       sequence_dict = {}
       completed_dict = {}
 
-      # Collect the token_datums
+      # Collect two copies of the token_datums, one for alive sequences and one for finished
       for token_datum in token_datums:
         tokens = np.array(token_datum.get_tensor().astype(float))
         token_scores.append(tokens)
+        token_scores_finished.append(tokens)
 
       # Collect the seq_datums
       for seq_datum in seq_datums:
@@ -377,11 +379,12 @@ class TransformerModel(query_processor.QueryProcessor):
 
         # For finished score_datum tensors, we add the sequence to our complete sequence dict after appending the
         # final score of the sequence.
-        # IMPORTANT: As of now, a 0 is appended as the candidate score for the final EOS token. This may not be
-        # correct, but I could not figure out what the proper candidate score is at this time.
+        # IMPORTANT: As of now, the final total score is being pulled from the exported candidate_log_probs vector, but
+        # number doesn't quite seem correct.
         if "finished" in score_datum.node_name:
           sequences = finished_sequences.popleft()
           scores = np.array(score_datum.get_tensor()).astype(float)[0]
+          token_score = token_scores_finished.popleft()
 
           for i, sequence in enumerate(sequences):
             if ((list(sequence))[-1] == 0):
@@ -390,11 +393,11 @@ class TransformerModel(query_processor.QueryProcessor):
             new_key = ' '.join(map(str, list(sequence)))
             old_key = new_key.rsplit(' ', 1)[0]
 
-            old__total_scores = sequence_dict[old_key][0]
+            old_total_scores = sequence_dict[old_key][0]
             old_token_scores = sequence_dict[old_key][1]
 
             new_total_scores = old_total_scores + [float(scores[i])]
-            new_token_scores = old_token_scores + [float(0)]
+            new_token_scores = old_token_scores + [float(token_score[0][i][new_token])]
 
             completed_dict[new_key] = [new_total_scores,new_token_scores]
 
