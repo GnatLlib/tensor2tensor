@@ -451,6 +451,11 @@ class TransformerModel(query_processor.QueryProcessor):
     # Restore the checkpoint from a copy that the session doesn't screw up
     open(checkpoint_file, "w").writelines([l for l in open(checkpoint_restore).readlines()])
 
+    # Remove any new checkpoint files that the session may have generated
+    for fname in os.listdir(CHECKPOINT):
+      if fname.startswith("events"):
+        os.remove(os.path.join(CHECKPOINT, fname))
+
     attention_class = attention.Attention()
 
     attention_results = attention_class.get_attentions_ds(inp_text, out_text, *att_mats)
