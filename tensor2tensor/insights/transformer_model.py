@@ -22,6 +22,8 @@ import os
 import shutil
 import time
 import json
+import math
+import heapq
 
 import numpy as np
 
@@ -53,14 +55,14 @@ def topk_watch_fn(feeds, fetches):
     fetches: Unused. Required by tfdbg.
 
   Returns:
-    a WatchOptions instance that will capture all beam search ops.
+    a WatchOptions instance that will capture all beam search ops as well as raw candidate token score tensors
   """
   del fetches, feeds
   return tfdbg.WatchOptions(
       node_name_regex_whitelist=
-      ".*grow_(finished|alive)_(topk_scores|topk_seq).*",
+      "(.*grow_(finished|alive)_(topk_scores|topk_seq).*)|(.*transformer/while/seq.*)|"
+      "(.*transformer/while/sub_1.*)|(.*transformer/while/scores.*)",
       debug_ops=["DebugIdentity"])
-
 
 def seq_filter(datum, tensor):
   """TFDBG data directory filter for capturing topk_seq operation dumps.
@@ -89,6 +91,18 @@ def scores_filter(datum, tensor):
   del tensor
   return "topk_scores" in datum.node_name
 
+def token_filter(datum, tensor):
+  """TFDBG data directory filter for capturing candidate_log_prob operation dumps.
+
+    Args:
+      datum: A datum to filter by node_name.
+      tensor: Unused. Required by tfdbg
+
+    Returns:
+      a true when datum should be returned.
+    """
+  del tensor
+  return "sub_1" in datum.node_name
 
 def sequence_key(sequence):
   """Returns a key for mapping sequence paths to graph vertices."""
@@ -212,6 +226,7 @@ class TransformerModel(query_processor.QueryProcessor):
         if "finished" in seq_datum.node_name:
           finished_sequences.append(sequences)
 
+
         for sequence in sequences:
           pieces = self.targets_vocab.decode_list(sequence)
           index = sequence[-1]
@@ -240,6 +255,8 @@ class TransformerModel(query_processor.QueryProcessor):
           sequences = finished_sequences.popleft()
 
         scores = np.array(score_datum.get_tensor()).astype(float)[0]
+
+
         for i, score in enumerate(scores):
           sequence = sequences[i]
           if sequence[-1] == 0:
@@ -258,7 +275,6 @@ class TransformerModel(query_processor.QueryProcessor):
       "name": "graph",
       "search_graph": decoding_graph.to_dict(),
     }
-
     return graph_vis
 
 
@@ -305,15 +321,96 @@ class TransformerModel(query_processor.QueryProcessor):
       dump_dir = tfdbg.DebugDumpDir(run_dir, validate=False)
       seq_datums = dump_dir.find(predicate=seq_filter)
       score_datums = dump_dir.find(predicate=scores_filter)
+      token_datums = dump_dir.find(predicate=token_filter)
 
-      for seq_datum, score_datum in zip(seq_datums, score_datums):
-        if "finished" in seq_datum.node_name and "finished" in score_datum.node_name:
-          sequences = np.array(seq_datum.get_tensor()).astype(int)[0]
+      # Record the different completed and active beam sequence ids, and candidate token scores
+      alive_sequences = deque()
+      finished_sequences = deque()
+      token_scores = deque()
+      token_scores_finished = deque()
+
+
+      # Record the sequence token_ids, total_scores and token_scores of sequences as they are built up
+      sequence_dict = {}
+      completed_dict = {}
+
+      # Collect two copies of the token_datums, one for alive sequences and one for finished
+      for token_datum in token_datums:
+        tokens = np.array(token_datum.get_tensor().astype(float))
+        token_scores.append(tokens)
+        token_scores_finished.append(tokens)
+
+      # Collect the seq_datums
+      for seq_datum in seq_datums:
+        sequences = np.array(seq_datum.get_tensor()).astype(int)[0]
+        if "alive" in seq_datum.node_name:
+          alive_sequences.append(sequences)
+        if "finished" in seq_datum.node_name:
+          finished_sequences.append(sequences)
+
+      # For each score_datum, we pop off the appropriate seq_datum and token_datum and build up our sequence dicts
+      for score_datum in score_datums:
+        if "alive" in score_datum.node_name:
+          sequences = alive_sequences.popleft()
+          token_score = token_scores.popleft()
+
           scores = np.array(score_datum.get_tensor()).astype(float)[0]
-          for sequence, score in zip(sequences, scores):
-            trimmed_sequence = np.trim_zeros(sequence)
-            pieces = self.targets_vocab.decode_list(trimmed_sequence)
-            t = decoding_nbest.get_sentence(sequence_key(trimmed_sequence), pieces, score)
+
+          # For each sequence, we generate the new sequence key by converting the sequence to a string.
+          # The new total_score and token_scores are calculated by searching up the key consisting of the
+          # new sequence without the latest token, then appending on the new total_score and token_score values
+          for i, sequence in enumerate(sequences):
+
+            if ((list(sequence))[-1] == 0):
+              continue
+
+            new_token = (list(sequence))[-1]
+            new_key = ' '.join(map(str, list(sequence)))
+            old_key = new_key.rsplit(' ', 1)[0]
+            old_total_scores = []
+            old_token_scores = []
+            if old_key in sequence_dict:
+              old_total_scores = sequence_dict[old_key][0]
+              old_token_scores = sequence_dict[old_key][1]
+
+            new_total_scores = old_total_scores + [float(scores[i])]
+            new_token_scores = old_token_scores + [float(token_score[0][i][new_token])]
+            sequence_dict[new_key] = [new_total_scores, new_token_scores]
+
+        # For finished score_datum tensors, we add the sequence to our complete sequence dict after appending the
+        # final score of the sequence.
+        # IMPORTANT: As of now, the final total score is being pulled from the exported candidate_log_probs vector, but
+        # number doesn't quite seem correct.
+        if "finished" in score_datum.node_name:
+          sequences = finished_sequences.popleft()
+          scores = np.array(score_datum.get_tensor()).astype(float)[0]
+          token_score = token_scores_finished.popleft()
+
+          for i, sequence in enumerate(sequences):
+            if ((list(sequence))[-1] == 0):
+              continue
+
+            new_key = ' '.join(map(str, list(sequence)))
+            old_key = new_key.rsplit(' ', 1)[0]
+
+            old_total_scores = sequence_dict[old_key][0]
+            old_token_scores = sequence_dict[old_key][1]
+
+            new_total_scores = old_total_scores + [float(scores[i])]
+            new_token_scores = old_token_scores + [float(token_score[0][i][new_token])]
+
+            completed_dict[new_key] = [new_total_scores,new_token_scores]
+
+      # Generate sentences within our nbest.Nbest() object from the complete sequences we have collected
+      for sequence in completed_dict:
+        sequence_list = map(int,sequence.split(" "))
+        sequence_list = [s for s in sequence_list if s != 0]
+        pieces = self.targets_vocab.decode_list(sequence_list)
+        scores = completed_dict[sequence]
+        score = scores[0][-1]
+        total_scores = [math.exp(x) for x in scores[0]]
+        token_scores = [math.exp(x) for x in scores[1]]
+        t = decoding_nbest.get_sentence(sequence_key(pieces), pieces, score, total_scores, token_scores)
 
     nbest_vis = {
       "visualization_name": "nbest",
@@ -353,6 +450,11 @@ class TransformerModel(query_processor.QueryProcessor):
 
     # Restore the checkpoint from a copy that the session doesn't screw up
     open(checkpoint_file, "w").writelines([l for l in open(checkpoint_restore).readlines()])
+
+    # Remove any new checkpoint files that the session may have generated
+    for fname in os.listdir(CHECKPOINT):
+      if fname.startswith("events"):
+        os.remove(os.path.join(CHECKPOINT, fname))
 
     attention_class = attention.Attention()
 
