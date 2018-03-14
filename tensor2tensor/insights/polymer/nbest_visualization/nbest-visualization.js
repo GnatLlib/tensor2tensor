@@ -58,29 +58,14 @@ class NBestVisualization extends Polymer.Element {
       },
     };
   }
-  
-  /**
-   * Helper function for making sentence rows selectable in the results table.
-   * Currently implemented using jQuery.
-   */
-  makeSelectable() {
-    // Using JQuery, there might be a better way to do this though
-    var table = Polymer.dom(this.root).querySelector('#nbest-table');
-    var self = this;
-    $(table).find(".sentence-row").click(function(){
-      $(this).addClass('selected').siblings().removeClass('selected');    
-      var value=$(this).index() - 1; // this index returns 1 higher than sequence index
-      self.updateSelected_(value);
-    });
-  }
 
   /**
    * Helper function to update the selected row when a row in the results 
    * table is clicked.
    * @private
    */
-  updateSelected_(value) {
-    this.selected_ = value;
+  updateSelected_(e) {
+    this.selected_  = e.model.index;
     this.dataUpdated_();
   }
 
@@ -118,7 +103,7 @@ class NBestVisualization extends Polymer.Element {
     var maxWidth = 1600;
     var maxHeight = 160;
     var margins = [20, 50, 50, 50];
-    var width = window.innerWidth - margins[1] - margins[2] - 256 - 100; // side bar is 256 px wide
+    var width = this.parentElement.clientWidth - margins[1] - margins[2];
     var height = window.innerHeight - margins[0] - margins[3] - 100;
 
     // Remove Current graph if any
@@ -174,14 +159,14 @@ class NBestVisualization extends Polymer.Element {
 
     // Append the path, bind the data, and call the line generated
     svg.append("path")
-      .datum(dataset) // 10. Binds data to the line 
+      .datum(dataset) // Binds data to the line 
       .attr("class", "line2") // Assign a class for styling
-      .attr("d", line2); // 11. Calls the line generator 
+      .attr("d", line2); // Calls the line generator 
 
     svg.append("path")
-      .datum(dataset) // 10. Binds data to the line 
-      .attr("class", "line") // Assign a class for styling
-      .attr("d", line); // 11. Calls the line generator 
+      .datum(dataset)
+      .attr("class", "line")
+      .attr("d", line);
     /*
     // Appends a circle for each datapoint 
     svg.selectAll(".dot")
