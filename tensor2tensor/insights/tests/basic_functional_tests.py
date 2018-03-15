@@ -2,7 +2,7 @@ import unittest
 from selenium_helper import SeleniumHelper
 
 
-class TestBasic(unittest.TestCase):
+class TestBasicFunctional(unittest.TestCase):
 
     def test_load_homepage(self):
         SeleniumHelperInstance.initialize_webdriver("Chrome")

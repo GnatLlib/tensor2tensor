@@ -1,0 +1,1 @@
+2ùö{'outputs': <tf.Tensor 'transformer/strided_slice_10:0' shape=(?, ?) dtype=int32>, 'problem_choice': <tf.Tensor 'mul:0' shape=(?,) dtype=int32>, 'scores': <tf.Tensor 'transformer/Select_1:0' shape=(?, 4) dtype=float32>, 'inputs': <tf.Tensor 'Tile:0' shape=(?, ?, 1, 1) dtype=int32>}
