@@ -410,7 +410,7 @@ class TransformerModel(query_processor.QueryProcessor):
         score = scores[0][-1]
         total_scores = [math.exp(x) for x in scores[0]]
         token_scores = [math.exp(x) for x in scores[1]]
-        t = decoding_nbest.get_sentence(sequence_key(pieces), pieces, score, total_scores, token_scores)
+        t = decoding_nbest.get_sentence(sequence_key(sequence_list), pieces, score, total_scores, token_scores)
 
     nbest_vis = {
       "visualization_name": "nbest",
