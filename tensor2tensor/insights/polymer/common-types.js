@@ -165,14 +165,16 @@ let StartTranslationResponse;
 /**
  * @typedef {{
  *   text: string,
+ *   score: number,
+ *   tokenscore: number,
  * }}
  */
 let Token;
 
 /**
  * @typedef {{
+ *   score: number,
  *   tokens: !Array<!Token>,
- *   rank: number,
  * }}
  */
 let Sentence;

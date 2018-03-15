@@ -58,29 +58,14 @@ class NBestVisualization extends Polymer.Element {
       },
     };
   }
-  
-  /**
-   * Helper function for making sentence rows selectable in the results table.
-   * Currently implemented using jQuery.
-   */
-  makeSelectable() {
-    // Using JQuery, there might be a better way to do this though
-    var table = Polymer.dom(this.root).querySelector('#nbest-table');
-    var self = this;
-    $(table).find(".sentence-row").click(function(){
-      $(this).addClass('selected').siblings().removeClass('selected');    
-      var value=$(this).index() - 1; // this index returns 1 higher than sequence index
-      self.updateSelected_(value);
-    });
-  }
 
   /**
    * Helper function to update the selected row when a row in the results 
    * table is clicked.
    * @private
    */
-  updateSelected_(value) {
-    this.selected_ = value;
+  updateSelected_(e) {
+    this.selected_  = e.model.index;
     this.dataUpdated_();
   }
 
@@ -89,23 +74,9 @@ class NBestVisualization extends Polymer.Element {
    * @private
    */
   dataUpdated_() {
-    // Compute total score based on token scores
-    var computedData = this.prepareData_();
-
     // Create and display the svg
-    this.createSVG_(computedData);
-  }
-
-  /**
-   * Prepares the data for the selected sentence to be displayed in the svg.
-   * Computes total score given the token scores.
-   * @private
-   */
-  prepareData_() {
-    var dataset = this.data.sentence[this.selected_].tokens;
-
-
-    return dataset;
+    var dataset = this.data.sentence[this.selected_].tokens
+    this.createSVG_(dataset);
   }
 
   /**
@@ -118,8 +89,10 @@ class NBestVisualization extends Polymer.Element {
     var maxWidth = 1600;
     var maxHeight = 160;
     var margins = [20, 50, 50, 50];
-    var width = window.innerWidth - margins[1] - margins[2] - 256 - 100; // side bar is 256 px wide
-    var height = window.innerHeight - margins[0] - margins[3] - 100;
+    var width = this.parentElement.clientWidth - margins[1] - margins[2];
+    var calculatedHeight = (window.innerHeight - margins[0] - margins[3] - 300);
+    var minHeight = 300;
+    var height = calculatedHeight > minHeight ? calculatedHeight : minHeight;
 
     // Remove Current graph if any
     d3.select(this.$.chart).selectAll('.svg-container').remove();
@@ -127,20 +100,20 @@ class NBestVisualization extends Polymer.Element {
     // Create the scales
     var xScale = d3.scaleLinear()
       .domain([0, dataset.length])
-      .range([0, width]); // output
+      .range([0, width]);
 
     var yScale = d3.scaleLinear()
-      .domain([0, 1]) // input 
-      .range([height, 0]); // output
+      .domain([0, 1])
+      .range([height, 0]);
 
-    // Create line (not working)
+    // Create line 
     var line = d3.line()
-      .x(function(d, i) { return xScale(i); }) // set the x values for the line generator
-      .y(function(d) { return yScale(d.tokenscore); }) // set the y values for the line generator
+      .x(function(d, i) { return xScale(i); })
+      .y(function(d) { return yScale(d.tokenscore); }) 
 
     var line2 = d3.line()
-      .x(function(d, i) { return xScale(i); }) // set the x values for the line generator
-      .y(function(d) { return yScale(d.score); }) // set the y values for the line generator
+      .x(function(d, i) { return xScale(i); })
+      .y(function(d) { return yScale(d.score); })
 
     // Add the SVG to the page
     var svg = d3.select(this.$.chart)
@@ -153,9 +126,8 @@ class NBestVisualization extends Polymer.Element {
       .attr("transform", "translate(" + margins[1] + "," + margins[0] + ")");
 
     var textValues = dataset.map(function(d){ return d.text });
-
     var totalValues = dataset.map(function(d){ return d.score });
-    console.log(totalValues);
+    var tokenValues = dataset.map(function(d){ return d.tokenscore });
 
     // Call the x axis in a group tag
     svg.append("g")
@@ -174,25 +146,31 @@ class NBestVisualization extends Polymer.Element {
 
     // Append the path, bind the data, and call the line generated
     svg.append("path")
-      .datum(dataset) // 10. Binds data to the line 
+      .datum(dataset) // Binds data to the line 
       .attr("class", "line2") // Assign a class for styling
-      .attr("d", line2); // 11. Calls the line generator 
+      .attr("d", line2); // Calls the line generator 
 
     svg.append("path")
-      .datum(dataset) // 10. Binds data to the line 
-      .attr("class", "line") // Assign a class for styling
-      .attr("d", line); // 11. Calls the line generator 
-    /*
-    // Appends a circle for each datapoint 
-    svg.selectAll(".dot")
-      .data(dataset)
-      .enter().append("circle") // Uses the enter().append() method
-      .attr("class", "dot") // Assign a class for styling
-      .attr("cx", function(d, i) { return xScale(i) })
-      .attr("cy", function(d) { return yScale(d.score) })
-      .attr("r", 5)
+      .datum(dataset)
+      .attr("class", "line")
+      .attr("d", line);
 
-    */
+    // Add the line labels
+    svg.append("text")
+      .attr("transform", "translate("+(width*((dataset.length-1)/dataset.length)+10)+","+((1-(tokenValues[(dataset.length)-1]))*height)+")")
+      .attr("dy", ".35em")
+      .attr("text-anchor", "start")
+      .style("fill", "orange")
+      .text("Token");
+
+    svg.append("text")
+      .attr("transform", "translate("+(width*((dataset.length-1)/dataset.length)+10)+","+((1-(totalValues[(dataset.length)-1]))*height)+")")
+      .attr("dy", ".35em")
+      .attr("text-anchor", "start")
+      .style("fill", "steelblue")
+      .text("Total");
+
+    // Add the line dots
     var nodeEnter = svg.selectAll("circle")
       .data(dataset)
       .enter()

@@ -15,7 +15,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <link rel="import" href="../polymer/polymer.html">
-<script src="https://code.jquery.com/jquery-2.1.4.js"></script>
 
 <dom-module id="nbest-visualization">
   <template>
@@ -42,10 +41,6 @@ limitations under the License.
 
         .sentence-row {
           cursor: pointer;
-        }
-
-        .sentence-row.selected {
-          background-color: #f6f6f6;
         }
 
         .rank-header {
@@ -98,8 +93,8 @@ limitations under the License.
         <th class="score-header" align="left">Total Score</th>
         <th class="result-header" align="left">Result</th>
       </tr>
-      <template is="dom-repeat" items="[[data.sentence]]" as="sentence" on-dom-change="makeSelectable">
-        <tr class="sentence-row">
+      <template is="dom-repeat" items="[[data.sentence]]" as="sentence">
+        <tr class="sentence-row" on-tap="updateSelected_" data-args$=[[sentence]]>
           <td> </td>
           <td>[[sentence.score]]</td>
           <td>
