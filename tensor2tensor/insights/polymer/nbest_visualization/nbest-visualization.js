@@ -75,7 +75,8 @@ class NBestVisualization extends Polymer.Element {
    */
   dataUpdated_() {
     // Create and display the svg
-    this.createSVG_(computedData);
+    var dataset = this.data.sentence[this.selected_].tokens
+    this.createSVG_(dataset);
   }
 
   /**
@@ -89,8 +90,8 @@ class NBestVisualization extends Polymer.Element {
     var maxHeight = 160;
     var margins = [20, 50, 50, 50];
     var width = this.parentElement.clientWidth - margins[1] - margins[2];
-    var calculatedHeight = (window.innerHeight - margins[0] - margins[3] - 100);
-    var minHeight = 400;
+    var calculatedHeight = (window.innerHeight - margins[0] - margins[3] - 300);
+    var minHeight = 300;
     var height = calculatedHeight > minHeight ? calculatedHeight : minHeight;
 
     // Remove Current graph if any
