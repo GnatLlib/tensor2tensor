@@ -12,4 +12,6 @@ To run frontend automated UI tests, make sure the Insights server is running on 
 ```
     python basic_functional_tests.py
 ```
+This command should be issued from the test folder to ensure the chromedriver is in the path. 
+
 Because some of these tests involve actually querying the model and performing translations, they can take a very long time to complete.
